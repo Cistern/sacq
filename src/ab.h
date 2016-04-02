@@ -41,6 +41,26 @@ extern "C" {
 // ab_node_t is an opaque node handle.
 typedef struct ab_node_t ab_node_t;
 
+// ab_callbacks_t is a set of callbacks that are executed on certain node events, such as leadership
+// changes or broadcasts. Since these functions are called from the libab event loop, it's important
+// to avoid blocking actions.
+typedef struct {
+	// on_append is called when a new message is broadcasted from a leader.
+	// The round number should monotonically increase, but the commit number may be repeated.
+	// The caller maintains ownership of the data pointer.
+	// ab_confirm_append should be called after the message is durably stored.
+	void (*on_append)(uint64_t round, uint64_t commit, const char* data, int data_len, void* cb_data);
+	// on_commit is called when the message with the given round and commit number is verified to be
+	// received by a majority of the cluster and stored durably.
+	void (*on_commit)(uint64_t round, uint64_t commit, void* cb_data);
+	// gained_leadership is called when the node gains the leadership role.
+	void (*gained_leadership)(void* cb_data);
+	// lost_leadership is called when the node loses the leadership role.
+	void (*lost_leadership)(void* cb_data);
+	// on_leader_change is called when there is a new leader ID.
+	void (*on_leader_change)(uint64_t leader_id, void* cb_data);
+} ab_callbacks_t;
+
 // ab_node_create returns a pointer to a new node handle.
 // Callers should verify that the pointer is not NULL.
 // Argument details:
@@ -73,35 +93,15 @@ ab_connect_to_peer(ab_node_t* node, const char* address);
 int
 ab_run(ab_node_t* node);
 
-// ab_callbacks_t is a set of callbacks that are executed on certain node events, such as leadership
-// changes or broadcasts. Since these functions are called from the libab event loop, it's important
-// to avoid blocking actions.
-typedef struct {
-	// on_append is called when a new message is broadcasted from a leader.
-	// The round number should monotonically increase, but the commit number may be repeated.
-	// The caller maintains ownership of the data pointer.
-	// ab_confirm_append should be called after the message is durably stored.
-	void (*on_append)(uint64_t round, uint64_t commit, const char* data, int data_len, void* cb_data);
-	// on_commit is called when the message with the given round and commit number is verified to be
-	// received by a majority of the cluster and stored durably.
-	void (*on_commit)(uint64_t round, uint64_t commit, void* cb_data);
-	// gained_leadership is called when the node gains the leadership role.
-	void (*gained_leadership)(void* cb_data);
-	// lost_leadership is called when the node loses the leadership role.
-	void (*lost_leadership)(void* cb_data);
-	// on_leader_change is called when there is a new leader ID.
-	void (*on_leader_change)(uint64_t leader_id, void* cb_data);
-} ab_callbacks_t;
+// ab_append_cb is the callback passed to ab_append. status is negative on failure.
+// On success, round and commit are the corresponding round and commit numbers for the
+// broadcasted message.
+typedef void (*ab_append_cb)(int status, uint64_t round, uint64_t commit, void* data);
 
 // ab_append broadcasts a message with the given content to the rest of the cluster.
 // ab_append_cb is called on success or failure with the provided data pointer.
 int
 ab_append(ab_node_t* node, const char* content, int content_len, ab_append_cb cb, void* data);
-
-// ab_append_cb is the callback passed to ab_append. status is negative on failure.
-// On success, round and commit are the corresponding round and commit numbers for the
-// broadcasted message.
-typedef void (*ab_append_cb)(int status, uint64_t round, uint64_t commit, void* data);
 
 // ab_confirm_append should be called when a message is durably stored after on_append is called.
 void
