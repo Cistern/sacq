@@ -4,6 +4,6 @@
 [submodule "dep/glog"]
 	path = dep/glog
 	url = https://github.com/Cistern/glog.git
-[submodule "include/cpl"]
-	path = include/cpl
+[submodule "dep/cpl"]
+	path = dep/cpl
 	url = https://github.com/Preetam/cpl.git

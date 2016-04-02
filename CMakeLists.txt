@@ -5,8 +5,9 @@ SET(CMAKE_C_FLAGS "-fPIC")
 SET(CMAKE_CXX_FLAGS "-std=c++14 -fPIC")
 
 include_directories(
-	include
 	src
+	include
+	dep
 	dep/libuv/include
 )
 
@@ -30,5 +31,5 @@ target_link_libraries(ab uv)
 target_link_libraries(main ab)
 
 install(TARGETS ab DESTINATION lib)
-install(FILES src/ab.h DESTINATION include)
+install(FILES include/ab.h DESTINATION include)
 
