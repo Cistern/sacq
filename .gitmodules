@@ -7,3 +7,6 @@
 [submodule "dep/cpl"]
 	path = dep/cpl
 	url = https://github.com/Preetam/cpl.git
+[submodule "dep/cryptopp"]
+	path = dep/cryptopp
+	url = https://github.com/Preetam/cryptopp.git

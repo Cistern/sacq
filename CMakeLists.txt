@@ -11,6 +11,7 @@ include_directories(
 	dep/libuv/include
 )
 
+add_subdirectory(dep/cryptopp)
 add_subdirectory(dep/glog)
 add_subdirectory(dep/libuv)
 
@@ -28,8 +29,8 @@ add_library(ab SHARED
 
 target_link_libraries(ab glog)
 target_link_libraries(ab uv)
+target_link_libraries(ab cryptopp-static)
 target_link_libraries(main ab)
 
 install(TARGETS ab DESTINATION lib)
 install(FILES include/ab.h DESTINATION include)
-
