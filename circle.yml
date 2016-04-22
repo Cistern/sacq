@@ -9,6 +9,6 @@ test:
   override:
     - mkdir -p build
     - cd build && cmake -DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 ..
-    - cd build && make -j
+    - cd build && make
     - cd build && sudo make install
     - cd go && go build
