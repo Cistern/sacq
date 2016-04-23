@@ -31,7 +31,7 @@ Peer :: run() {
 				peer->m_pending_msg_size++;
 			}
 			while (true) {
-				auto msg_length = decode_message_length(peer->m_read_buf.data(),
+				auto msg_length = peer->m_codec->decode_message_length(peer->m_read_buf.data(),
 					peer->m_read_buf.size());
 				if (msg_length > 0 && peer->m_pending_msg_size >= msg_length) {
 					peer->process_message_data(peer->m_read_buf.data(), msg_length);
@@ -61,7 +61,7 @@ void
 Peer :: process_message_data(uint8_t* data, int size)
 {
 	std::unique_ptr<Message> m;
-	if (decode_message(m, data, size) >= 0) {
+	if (m_codec->decode_message(m, data, size) >= 0) {
 		m->source = m_index;
 		if (m_send_to_node != nullptr) {
 			m_send_to_node(m.get());

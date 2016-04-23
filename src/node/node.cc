@@ -50,7 +50,7 @@ Node :: connect_to_peer(cpl::net::SockAddr& addr) {
 	}
 
 	IdentityMessage ident_msg(m_id, m_listen_address);
-	auto peer = std::make_shared<Peer>([=](const Message* m) {
+	auto peer = std::make_shared<Peer>(m_codec, [=](const Message* m) {
 		handle_message(m);
 	}, addr, std::move(handle), ident_msg);
 	m_peer_registry->register_peer(++m_index_counter, peer);
@@ -85,7 +85,7 @@ Node ::	on_connect(uv_stream_t* server, int status) {
 	uv_tcp_init(server->loop, client.get());
 	uv_accept(server, (uv_stream_t*)client.get());
 	IdentityMessage ident_msg(self->m_id, self->m_listen_address);
-	auto peer = std::make_shared<Peer>([=](const Message* m) {
+	auto peer = std::make_shared<Peer>(self->m_codec, [=](const Message* m) {
 		self->handle_message(m);
 	}, std::move(client), ident_msg);
 	self->m_peer_registry->register_peer(++self->m_index_counter, peer);

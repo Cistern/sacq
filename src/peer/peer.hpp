@@ -7,17 +7,19 @@
 #include <glog/logging.h>
 #include <cpl/net/sockaddr.hpp>
 
-#include "message/decode.hpp"
+#include "message/codec.hpp"
 
 const int READ_BUFFER_SIZE = 16*1024;
 
 class Peer
 {
 public:
-	Peer(std::function<void(const Message*)> send_to_node,
+	Peer(std::shared_ptr<Codec> codec,
+		 std::function<void(const Message*)> send_to_node,
 		 std::unique_ptr<uv_tcp_t> conn,
 		 IdentityMessage node_ident_msg)
-	: m_send_to_node(send_to_node)
+	: m_codec(codec)
+	, m_send_to_node(send_to_node)
 	, m_active(true)
 	, m_tcp(std::move(conn))
 	, m_valid(false)
@@ -27,10 +29,12 @@ public:
 		run();
 	}
 
-	Peer(std::function<void(const Message*)> send_to_node,
+	Peer(std::shared_ptr<Codec> codec,
+		 std::function<void(const Message*)> send_to_node,
 		 cpl::net::SockAddr& addr, std::unique_ptr<uv_tcp_t> conn,
 		 IdentityMessage node_ident_msg)
-	: m_send_to_node(send_to_node)
+	: m_codec(codec)
+	, m_send_to_node(send_to_node)
 	, m_active(false)
 	, m_tcp(std::move(conn))
 	, m_valid(true)
@@ -165,6 +169,7 @@ private:
 	process_message_data(uint8_t* data, int size);
 
 private:
+	std::shared_ptr<Codec>              m_codec;
 	std::function<void(const Message*)> m_send_to_node;
 	bool                                m_active;
 	bool                                m_valid;

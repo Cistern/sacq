@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "message.hpp"
+#include "codec.hpp"
 
 /**
  * A message header has 4 fields:
@@ -79,7 +80,7 @@ Message :: unpack(uint8_t* src, int src_len) {
 }
 
 int
-decode_message(std::unique_ptr<Message>& m, uint8_t* src, int src_len) {
+Codec :: decode_message(std::unique_ptr<Message>& m, uint8_t* src, int src_len) {
 	assert(src_len >= 5);
 	// Peek at the message type
 	switch (src[4]) {
@@ -103,7 +104,7 @@ decode_message(std::unique_ptr<Message>& m, uint8_t* src, int src_len) {
 }
 
 int
-decode_message_length(uint8_t* src, int src_len) {
+Codec :: decode_message_length(uint8_t* src, int src_len) {
 	if (src_len < 4) {
 		return -1;
 	}

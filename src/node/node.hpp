@@ -13,6 +13,7 @@
 #include "role.hpp"
 #include "peer/peer.hpp"
 #include "peer_registry.hpp"
+#include "message/codec.hpp"
 #include "message/message.hpp"
 
 const uint64_t leader_timeout_ns = 1e9;
@@ -24,6 +25,7 @@ public:
 	: m_id(id)
 	, m_cluster_size(cluster_size)
 	, m_peer_registry(std::make_unique<PeerRegistry>())
+	, m_codec(std::make_shared<Codec>())
 	, m_trusted_peer(0)
 	, m_last_leader_active(uv_hrtime())
 	, m_role(std::make_unique<Role>(*m_peer_registry, id, cluster_size))
@@ -98,12 +100,19 @@ public:
 		m_role->set_committed(round, commit);
 	}
 
+	void
+	set_key(const std::string& key)
+	{
+		m_codec->set_key(key);
+	}
+
 private:
 	uint64_t                      m_id;
 	std::string                   m_listen_address;
 	std::unique_ptr<uv_loop_t>    m_uv_loop;
 	std::unique_ptr<uv_tcp_t>     m_tcp;
 	std::unique_ptr<PeerRegistry> m_peer_registry;
+	std::shared_ptr<Codec>        m_codec;
 	int                           m_index_counter;
 	int                           m_cluster_size;
 	ab_callbacks_t*               m_client_callbacks;
