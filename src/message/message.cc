@@ -9,9 +9,11 @@
  * - type (1 byte)
  * - flags (1 byte)
  * - id (8 bytes)
- * Total: 14 bytes
+ * - iv (16 bytes)
+ * - hmac (32 bytes)
+ * Total: 62 bytes
  */
-#define MSG_HEADER_SIZE 14
+#define MSG_HEADER_SIZE 62
 
 int
 Message :: pack(uint8_t* dest, int dest_len) const {
@@ -32,6 +34,12 @@ Message :: pack(uint8_t* dest, int dest_len) const {
 	write64be(message_id, dest);
 	dest += 8;
 	dest_len -= 8;
+	memcpy(dest, iv, 16);
+	dest += 16;
+	dest_len -= 16;
+	memcpy(dest, hmac, 32);
+	dest += 32;
+	dest_len -= 32;
 
 	int status = pack_body(dest, dest_len);
 	if (status < 0) {
@@ -62,6 +70,10 @@ Message :: unpack(uint8_t* src, int src_len) {
 	src++;
 	message_id = read64be(src);
 	src += 8;
+	memcpy(iv, src, 16);
+	src += 16;
+	memcpy(hmac, src, 32);
+	src += 32;
 	unpack_body(src, length);
 	return 0;
 }

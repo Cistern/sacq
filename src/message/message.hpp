@@ -85,10 +85,12 @@ public:
 	unpack_body(uint8_t* src, int src_len) = 0;
 
 public:
-	int source;
-	uint8_t type;
-	uint8_t flags; // Reserved
+	int      source;
+	uint8_t  type;
+	uint8_t  flags; // Reserved
 	uint64_t message_id;
+	uint8_t  iv[16];
+	uint8_t  hmac[32];
 };
 
 class IdentityRequest : public Message
