@@ -6,6 +6,7 @@ dependencies:
     - sudo apt-get install g++-5 cmake -y
     - git submodule update --init --recursive
     - cd build && cmake -DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 ..
+    - cd build && make -t dep || true
     - cd build && make uv glog -j
     - cd build && make cryptopp-static
   cache_directories:
