@@ -47,11 +47,13 @@ struct FollowerData
 	FollowerData()
 	: m_current_leader(0)
 	, m_last_leader_active(0)
+	, m_pending_commit(0)
 	{
 	}
 
 	uint64_t m_current_leader;
 	uint64_t m_last_leader_active;
+	uint64_t m_pending_commit;
 }; // FollowerData
 
 class Role
