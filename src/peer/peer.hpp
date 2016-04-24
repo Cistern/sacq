@@ -121,7 +121,12 @@ public:
 		uv_buf_t a[] = {
 			{.base = (char*)buf, .len = (size_t)size}
 		};
-		msg->pack(buf, size);
+		auto ret = m_codec->pack_message(msg, buf, size);
+		if (ret < 0) {
+			// Packing failed.
+			delete[] buf;
+			return;
+		}
 		auto req = new uv_write_t;
 		req->data = buf;
 		uv_write(req, (uv_stream_t*)m_tcp.get(), a, 1, [](uv_write_t* req, int) {

@@ -72,6 +72,10 @@ typedef struct {
 ab_node_t*
 ab_node_create(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* data);
 
+// ab_set_key sets the node's shared encryption key.
+void
+ab_set_key(ab_node_t* node, const char* key, int key_len);
+
 // ab_set_committed initializes the node's round and commit numbers. This should be called
 // with the appropriate numbers on recovery.
 void

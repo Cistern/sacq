@@ -13,6 +13,12 @@ ab_node_create(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* da
 }
 
 void
+ab_set_key(ab_node_t* node, const char* key, int key_len) {
+	std::string key_str(key, key_len);
+	node->rep->set_key(key_str);
+}
+
+void
 ab_set_committed(ab_node_t* node, uint64_t round, uint64_t commit) {
 	node->rep->set_committed(round, commit);
 }

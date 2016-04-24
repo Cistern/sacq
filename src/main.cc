@@ -24,6 +24,8 @@ main(int argc, char* argv[]) {
 
 	// Local listen address
 	std::string addr_str;
+	// Shared encryption key
+	std::string key;
 	// Peers to initially connect to.
 	// These are automatically marked as valid.
 	std::vector<cpl::net::SockAddr> peer_addrs;
@@ -33,7 +35,8 @@ main(int argc, char* argv[]) {
 	// Flags
 	cpl::Flags flags(NAME, VERSION);
 	flags.add_option("--help", "-h", "show help documentation", show_help, &flags);
-	flags.add_option("--listen", "-l", "set listen address for cluster nodes", set_listen_string, &addr_str);
+	flags.add_option("--listen", "-l", "set listen address for cluster nodes", set_string, &addr_str);
+	flags.add_option("--key", "-k", "set shared cluster encryption key", set_string, &key);
 	flags.add_option("--peers", "-p", "list of peers", add_peers, &peer_addrs);
 	flags.add_option("--id", "-i", "ID, unique among the cluster", set_id, &id);
 	flags.add_option("--cluster-size", "-s", "Total size of the cluster. Determines quorum size.",
@@ -58,6 +61,7 @@ main(int argc, char* argv[]) {
 
 	ab_callbacks_t callbacks;
 	Node n(id, cluster_size, callbacks, nullptr);
+	n.set_key(key);
 	if (n.start(addr_str) < 0) {
 		LOG(WARNING) << "failed to start";
 		return 1;

@@ -23,7 +23,7 @@ show_help(std::string a, std::string b, void* d) {
 }
 
 void
-set_listen_string(std::string a, std::string b, void* d) {
+set_string(std::string a, std::string b, void* d) {
 	auto str = reinterpret_cast<std::string*>(d);
 	*str = b;
 }
