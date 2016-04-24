@@ -17,15 +17,17 @@ public:
 	void
 	set_key(const std::string& key)
 	{
+		if (key == "") {
+			m_key = "";
+			return;
+		}
 		if (key.size() == CryptoPP::SHA3_256::DIGESTSIZE) {
 			m_key = key;
 			return;
 		}
 		CryptoPP::SHA3_256 hash;
 		uint8_t digest[CryptoPP::SHA3_256::DIGESTSIZE];
-		if (key.size() > 0) {
-			hash.Update((const uint8_t*)key.c_str(), key.size());
-		}
+		hash.Update((const uint8_t*)key.c_str(), key.size());
 		hash.Final(digest);
 		m_key = std::string((const char*)digest, CryptoPP::SHA3_256::DIGESTSIZE);
 	}
