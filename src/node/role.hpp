@@ -21,6 +21,7 @@ struct LeaderData
 {
 	LeaderData()
 	: m_last_broadcast(0)
+	, m_pending_commit(0)
 	{
 	}
 

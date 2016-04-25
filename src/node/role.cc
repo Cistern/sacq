@@ -25,29 +25,29 @@ Role :: periodic_leader(uint64_t ts) {
 				max_commit = it->second;
 			}
 		}
-		if (max_commit > m_commit) {
-			m_commit = max_commit;
-			if (m_leader_data->m_pending_commit == m_commit) {
-				if (m_leader_data->m_callback != nullptr) {
-					// Append was confirmed by a majority.
-					m_leader_data->m_callback(0, m_round, m_commit, m_leader_data->m_callback_data);
-					m_leader_data->m_callback = nullptr;
-					m_leader_data->m_callback_data = nullptr;
-					m_leader_data->m_pending_commit = 0;
-				}
-			}
-		} else {
-			if (m_leader_data->m_pending_commit != 0) {
+		if (max_commit == m_leader_data->m_pending_commit && max_commit > 0) {
+			if (m_leader_data->m_callback != nullptr) {
+				// Append was confirmed by a majority.
+				m_leader_data->m_callback(0, m_round, m_commit, m_leader_data->m_callback_data);
+				m_leader_data->m_callback = nullptr;
+				m_leader_data->m_callback_data = nullptr;
+			} else {
 				// Majority have acknowledged the commit
 				// Report that to the client
 				if (m_client_callbacks.on_commit != nullptr) {
-					m_client_callbacks.on_commit(m_round, m_commit, m_client_callbacks_data);
+					m_client_callbacks.on_commit(m_round, m_leader_data->m_pending_commit, m_client_callbacks_data);
 				}
+				m_commit = m_leader_data->m_pending_commit;
+				m_leader_data->m_pending_commit = 0;
 			}
 		}
 
 		++m_seq;
-		LeaderActiveMessage msg(m_id, m_seq, m_commit, m_round);
+		auto commit = m_commit;
+		if (m_leader_data->m_pending_commit > 0) {
+			commit = m_leader_data->m_pending_commit;
+		}
+		LeaderActiveMessage msg(m_id, m_seq, commit, m_round);
 		m_registry.broadcast(&msg);
 		m_leader_data->m_last_broadcast = ts;
 		m_leader_data->m_acks.clear();
