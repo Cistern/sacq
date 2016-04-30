@@ -21,22 +21,11 @@ Builds may succeed with other BSDs, but they have not been verified.
 **All platforms**
 
 - Submodules
-  - `git submodule update --init --recursive`
+  - `git submodule update --init --recursive --depth 1`
 - CMake 3.0 or higher
 - A compiler that supports C++14
 
-**Linux**
-
 Continue to [Building](#building).
-
-**OS X**
-
-Continue to [Building](#building).
-
-**FreeBSD**
-
-- libexecinfo
-  - `pkg install libexecinfo`
 
 ### Building
 
