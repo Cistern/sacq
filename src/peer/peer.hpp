@@ -4,7 +4,6 @@
 #include <memory>
 #include <cstdint>
 #include <functional>
-#include <glog/logging.h>
 #include <cpl/net/sockaddr.hpp>
 
 #include "message/codec.hpp"

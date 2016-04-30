@@ -12,7 +12,6 @@ include_directories(
 )
 
 add_subdirectory(dep/cryptopp)
-add_subdirectory(dep/glog)
 add_subdirectory(dep/libuv)
 
 add_executable(main
@@ -27,7 +26,6 @@ add_library(ab SHARED
 	src/c.cc
 )
 
-target_link_libraries(ab glog)
 target_link_libraries(ab uv)
 target_link_libraries(ab cryptopp-static)
 target_link_libraries(main ab)

@@ -4,7 +4,6 @@
 #include <memory>
 #include <functional>
 #include <unordered_map>
-#include <glog/logging.h>
 
 #include "ab.h"
 #include "message/message.hpp"

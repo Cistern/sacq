@@ -55,9 +55,7 @@ Role :: periodic_leader(uint64_t ts) {
 	}
 	if (ts - m_leader_data->m_last_broadcast > 300e6) {
 		// It's been over 300 ms since the last broadcast.
-		DLOG(INFO) << "didn't get majority vote";
 		// Didn't get a majority. We're not a leader anymore.
-		DLOG(INFO) << "Lost leadership";
 		if (m_client_callbacks.lost_leadership != nullptr) {
 			m_client_callbacks.lost_leadership(m_client_callbacks_data);
 		}
@@ -81,7 +79,6 @@ Role :: periodic_potential_leader(uint64_t ts) {
 		// It's been over 300 ms since the last broadcast.
 		if (m_potential_leader_data->m_acks.size() >= m_cluster_size/2) {
 			// Got a majority. We're now a leader.
-			DLOG(INFO) << "Gained leadership";
 			if (m_client_callbacks.gained_leadership != nullptr) {
 				m_client_callbacks.gained_leadership(m_client_callbacks_data);
 			}
@@ -113,7 +110,6 @@ Role :: periodic_follower(uint64_t ts) {
 
 	if (ts - m_follower_data->m_last_leader_active > 1000e6) {
 		// Leader hasn't been active for over 1000 ms
-		DLOG(INFO) << "Leader has timed out. Moving up to PotentialLeader state.";
 		m_follower_data = nullptr;
 		m_state = PotentialLeader;
 		m_potential_leader_data = std::make_unique<PotentialLeaderData>();
@@ -125,7 +121,6 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 	if (m_state != Follower) {
 		if (msg.id < m_id) {
 			// Other node has more authority. Drop down to follower state.
-			DLOG(INFO) << "dropping to follower state";
 			if (m_state == Leader) {
 				if (m_leader_data->m_callback != nullptr) {
 					// Append was not confirmed by a majority.

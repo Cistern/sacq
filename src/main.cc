@@ -2,7 +2,6 @@
 #include <signal.h>
 #include <iostream>
 
-#include <glog/logging.h>
 #include <cpl/flags.hpp>
 #include <cpl/net/sockaddr.hpp>
 
@@ -14,10 +13,6 @@ const std::string VERSION = "DEV";
 
 int
 main(int argc, char* argv[]) {
-	// Logging setup.
-	google::InitGoogleLogging(argv[0]);
-	FLAGS_logtostderr = 1;
-
 	// Ignore SIGPIPE. This way we don't exit if we attempt to
 	// write to a closed connection.
 	signal(SIGPIPE, SIG_IGN);
@@ -55,7 +50,7 @@ main(int argc, char* argv[]) {
 	}
 
 	if (cluster_size == 0) {
-		LOG(INFO) << "--cluster-size is currently 0. Increasing to 1." << std::endl;
+		std::cerr << "--cluster-size is currently 0. Increasing to 1." << std::endl;
 		cluster_size = 1;
 	}
 
@@ -63,10 +58,10 @@ main(int argc, char* argv[]) {
 	Node n(id, cluster_size, callbacks, nullptr);
 	n.set_key(key);
 	if (n.start(addr_str) < 0) {
-		LOG(WARNING) << "failed to start";
+		std::cerr << "failed to start" << std::endl;
 		return 1;
 	}
-	LOG(INFO) << "listening on " << addr_str << " with ID " << id;
+	std::cerr << "listening on " << addr_str << " with ID " << id << std::endl;
 
 	for (int i = 0; i < peer_addrs.size(); i++) {
 		n.connect_to_peer(peer_addrs[i]);

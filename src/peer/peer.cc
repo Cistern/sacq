@@ -108,7 +108,7 @@ Peer :: reconnect()
 	if (m_tcp == nullptr) {
 		m_tcp = std::make_unique<uv_tcp_t>();
 		if (uv_tcp_init(m_loop, m_tcp.get()) < 0) {
-			LOG(WARNING) << "uv_tcp_init failed";
+			// LOG
 		}
 		m_tcp->data = this;
 	}
@@ -116,9 +116,9 @@ Peer :: reconnect()
 	req->data = this;
 	cpl::net::SockAddr addr;
 	if (addr.parse(m_address) < 0) {
-		LOG(WARNING) << "failed to parse address: " << m_address;
+		// LOG
+		return;
 	}
-	LOG(INFO) << "reconnecting to " << m_address;
 	struct sockaddr_storage sockaddr;
 	addr.get_sockaddr(reinterpret_cast<struct sockaddr*>(&sockaddr));
 	uv_tcp_connect(req, m_tcp.get(), reinterpret_cast<struct sockaddr*>(&sockaddr),

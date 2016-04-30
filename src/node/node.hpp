@@ -4,9 +4,9 @@
 #include <memory>
 #include <cerrno>
 #include <future>
+#include <iostream>
 
 #include <uv.h>
-#include <glog/logging.h>
 #include <cpl/net/sockaddr.hpp>
 
 #include "ab.h"
@@ -30,7 +30,6 @@ public:
 	, m_last_leader_active(uv_hrtime())
 	, m_role(std::make_unique<Role>(*m_peer_registry, id, cluster_size))
 	{
-		LOG(INFO) << "Node initialized with cluster size " << m_cluster_size;
 		m_role->set_callbacks(callbacks, callbacks_data);
 	}
 

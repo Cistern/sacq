@@ -5,7 +5,7 @@ Node :: start(std::string address) {
 	// Create a libuv event loop.
 	m_uv_loop = std::make_unique<uv_loop_t>();
 	if (uv_loop_init(m_uv_loop.get()) < 0) {
-		LOG(ERROR) << "failed to initialize event loop";
+		std::cerr << "failed to initialize event loop" << std::endl;
 		return -1;
 	}
 
@@ -13,7 +13,7 @@ Node :: start(std::string address) {
 	struct sockaddr_storage sockaddr;
 	cpl::net::SockAddr addr;
 	if (addr.parse(address) < 0) {
-		LOG(ERROR) << "failed to parse listen address";
+		std::cerr << "failed to parse listen address" << std::endl;
 		return -1;
 	}
 	addr.get_sockaddr(reinterpret_cast<struct sockaddr*>(&sockaddr));
@@ -21,18 +21,18 @@ Node :: start(std::string address) {
 	// Create a TCP handle.
 	m_tcp = std::make_unique<uv_tcp_t>();
 	if (uv_tcp_init(m_uv_loop.get(), m_tcp.get()) < 0) {
-		LOG(ERROR) << "failed to initialize TCP handle";
+		std::cerr << "failed to initialize TCP handle" << std::endl;
 		return -1;
 	}
 	m_tcp->data = this;
 	auto status = uv_tcp_bind(m_tcp.get(), reinterpret_cast<struct sockaddr*>(&sockaddr), 0);
 	if (status < 0) {
-		LOG(ERROR) << "failed to bind to address: " << uv_strerror(status);
+		std::cerr << "failed to bind to address: " << uv_strerror(status) << std::endl;
 		return -1;
 	}
 
 	if (uv_listen((uv_stream_t*)m_tcp.get(), 8, Node::on_connect) < 0) {
-		LOG(ERROR) << "uv_listen failed";
+		std::cerr << "uv_listen failed" << std::endl;
 		return -1;
 	}
 
@@ -45,7 +45,7 @@ Node :: connect_to_peer(cpl::net::SockAddr& addr) {
 	// Create a TCP handle.
 	auto handle = std::make_unique<uv_tcp_t>();
 	if (uv_tcp_init(m_uv_loop.get(), handle.get()) < 0) {
-		LOG(ERROR) << "failed to initialize TCP handle";
+		std::cerr << "failed to initialize TCP handle" << std::endl;
 		return;
 	}
 
@@ -69,7 +69,7 @@ Node :: run() {
 	},
 	16, 16);
 	if (uv_run(m_uv_loop.get(), UV_RUN_DEFAULT) < 0) {
-		LOG(ERROR) << "failed to run event loop";
+		std::cerr << "failed to run event loop" << std::endl;
 		return;
 	}
 	uv_loop_close(m_uv_loop.get());

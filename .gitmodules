@@ -1,9 +1,6 @@
 [submodule "dep/libuv"]
 	path = dep/libuv
 	url = https://github.com/Cistern/libuv.git
-[submodule "dep/glog"]
-	path = dep/glog
-	url = https://github.com/Cistern/glog.git
 [submodule "dep/cpl"]
 	path = dep/cpl
 	url = https://github.com/Preetam/cpl.git
