@@ -28,7 +28,7 @@ Role :: periodic_leader(uint64_t ts) {
 		if (max_commit == m_leader_data->m_pending_commit && max_commit > 0) {
 			if (m_leader_data->m_callback != nullptr) {
 				// Append was confirmed by a majority.
-				m_leader_data->m_callback(0, m_round, m_commit, m_leader_data->m_callback_data);
+				m_leader_data->m_callback(0, m_round, m_leader_data->m_pending_commit, m_leader_data->m_callback_data);
 				m_leader_data->m_callback = nullptr;
 				m_leader_data->m_callback_data = nullptr;
 			} else {
