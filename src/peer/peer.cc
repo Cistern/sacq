@@ -74,10 +74,9 @@ Peer :: init_loop_handles()
 {
 	m_tcp->data = this;
 	m_loop = m_tcp->loop;
-	m_timer = std::make_unique<uv_timer_t>();
-	uv_timer_init(m_loop, m_timer.get());
-	m_timer->data = this;
-	uv_timer_start(m_timer.get(), [](uv_timer_t* timer) {
+	uv_timer_init(m_loop, &m_timer);
+	m_timer.data = this;
+	uv_timer_start(&m_timer, [](uv_timer_t* timer) {
 		auto self = (Peer*)timer->data;
 		self->periodic();
 	}, 16, 16);

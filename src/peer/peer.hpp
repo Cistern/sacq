@@ -149,11 +149,8 @@ public:
 
 	~Peer()
 	{
-		uv_timer_stop(m_timer.get());
-		auto handle = m_timer.release();
-		uv_close((uv_handle_t*)handle, [](uv_handle_t* handle) {
-			delete handle;
-		});
+		uv_timer_stop(&m_timer);
+		uv_close((uv_handle_t*)(&m_timer), [](uv_handle_t* handle) {});
 	}
 
 private:
@@ -178,7 +175,7 @@ private:
 	bool                                m_active;
 	bool                                m_valid;
 	std::unique_ptr<uv_tcp_t>           m_tcp;
-	std::unique_ptr<uv_timer_t>         m_timer;
+	uv_timer_t                          m_timer;
 	uv_loop_t*                          m_loop;
 	int                                 m_index;
 	uint64_t                            m_id;
