@@ -210,7 +210,7 @@ func on_leader_change_go_cb(id C.uint64_t, p unsafe.Pointer) {
 
 //export append_go_cb
 func append_go_cb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
-	i := *(*int)(p)
+	i := int(*(*C.int)(p))
 	C.free(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()

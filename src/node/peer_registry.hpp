@@ -40,7 +40,6 @@ public:
 			auto p = i->second;
 			if (i->first < index && (p->id() == id || p->address() == address)) {
 				*p = std::move(*peer);
-				cleanup();
 				break;
 			}
 		}
