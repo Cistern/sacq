@@ -163,8 +163,8 @@ var registeredNodesLock sync.RWMutex
 var registrationCounter int
 var registeredNodes = map[int]*Node{}
 
-//export on_append_go_cb
-func on_append_go_cb(round C.uint64_t, commit C.uint64_t, str *C.char, length C.int, p unsafe.Pointer) {
+//export onAppendGoCb
+func onAppendGoCb(round C.uint64_t, commit C.uint64_t, str *C.char, length C.int, p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
@@ -172,8 +172,8 @@ func on_append_go_cb(round C.uint64_t, commit C.uint64_t, str *C.char, length C.
 	node.callbackHandler.OnAppend(uint64(round), uint64(commit), C.GoStringN(str, length))
 }
 
-//export on_commit_go_cb
-func on_commit_go_cb(round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
+//export onCommitGoCb
+func onCommitGoCb(round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
@@ -181,8 +181,8 @@ func on_commit_go_cb(round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
 	node.callbackHandler.OnCommit(uint64(round), uint64(commit))
 }
 
-//export gained_leadership_go_cb
-func gained_leadership_go_cb(p unsafe.Pointer) {
+//export gainedLeadershipGoCb
+func gainedLeadershipGoCb(p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
@@ -190,8 +190,8 @@ func gained_leadership_go_cb(p unsafe.Pointer) {
 	node.callbackHandler.GainedLeadership()
 }
 
-//export lost_leadership_go_cb
-func lost_leadership_go_cb(p unsafe.Pointer) {
+//export lostLeadershipGoCb
+func lostLeadershipGoCb(p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
@@ -199,8 +199,8 @@ func lost_leadership_go_cb(p unsafe.Pointer) {
 	node.callbackHandler.LostLeadership()
 }
 
-//export on_leader_change_go_cb
-func on_leader_change_go_cb(id C.uint64_t, p unsafe.Pointer) {
+//export onLeaderChangeGoCb
+func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
@@ -208,8 +208,8 @@ func on_leader_change_go_cb(id C.uint64_t, p unsafe.Pointer) {
 	node.callbackHandler.OnLeaderChange(uint64(id))
 }
 
-//export append_go_cb
-func append_go_cb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
+//export appendGoCb
+func appendGoCb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
 	i := int(*(*C.int)(p))
 	C.free(p)
 	registeredNodesLock.RLock()
