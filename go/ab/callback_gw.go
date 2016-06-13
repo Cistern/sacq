@@ -33,10 +33,8 @@ void set_callbacks(ab_callbacks_t* callbacks) {
 	callbacks->on_leader_change = &on_leader_change_go_cb_gateway;
 }
 
-void append_go_gateway(ab_node_t* n, char* data, int data_len, int callbackNum) {
-	int* argPtr = malloc(sizeof(int));
-	*argPtr = callbackNum;
-	ab_append(n, data, data_len, appendGoCb, argPtr);
+void append_go_gateway(ab_node_t* n, char* data, int data_len, void* cb_data) {
+	ab_append(n, data, data_len, appendGoCb, cb_data);
 }
 */
 import "C"

@@ -142,7 +142,7 @@ func (n *Node) Append(data string) (uint64, uint64, error) {
 	n.appendResult = make(chan appendResult)
 	cData := C.CString(data)
 	defer C.free(unsafe.Pointer(cData))
-	C.append_go_gateway(n.ptr, cData, C.int(len(data)), C.int(n.callbacksNum))
+	C.append_go_gateway(n.ptr, cData, C.int(len(data)), unsafe.Pointer(&n.callbacksNum))
 	result := <-n.appendResult
 	n.appendResult = nil
 	if result.status == 0 {
@@ -210,8 +210,7 @@ func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 
 //export appendGoCb
 func appendGoCb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
-	i := int(*(*C.int)(p))
-	C.free(p)
+	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
