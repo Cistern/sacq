@@ -11,11 +11,17 @@ include_directories(
 	dep/libuv/include
 )
 
+SET(BUILD_TESTING OFF)
 add_subdirectory(dep/cryptopp)
 add_subdirectory(dep/libuv)
 
 add_executable(main
 	src/main.cc
+)
+
+add_executable(abtest
+	test/catch.cc
+	test/factorial.cc
 )
 
 add_library(ab SHARED
@@ -32,3 +38,7 @@ target_link_libraries(main ab)
 
 install(TARGETS ab DESTINATION lib)
 install(FILES include/ab.h DESTINATION include)
+
+add_test(NAME abtest COMMAND abtest)
+
+enable_testing(true)
