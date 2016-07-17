@@ -1,5 +1,7 @@
 #include <memory>
 #include <cstring>
+#include <cassert>
+#include <iomanip>
 #include <iostream>
 #include <tweetnacl/tweetnacl.h>
 
@@ -9,7 +11,7 @@
 
 /**
  * A message header has the following fields:
- * - length (4 bytes)
+ * - length (of the entire message, including the payload) (4 bytes)
  * - nonce or hash (24 bytes)
  * - type (1 byte)
  * - flags (1 byte)
@@ -23,6 +25,7 @@ const int NONCE_HASH_OFFSET = 4;
 const int NONCE_HASH_SIZE = 24;
 
 const int TYPE_OFFSET = 4+NONCE_HASH_SIZE;
+const int PAYLOAD_OFFSET = TYPE_OFFSET;
 
 int
 Message :: pack(uint8_t* dest, int dest_len) const {
@@ -78,7 +81,7 @@ Message :: unpack(uint8_t* src, int src_len) {
 	src++;
 	message_id = read64be(src);
 	src += 8;
-	unpack_body(src, length);
+	unpack_body(src, length - MSG_HEADER_SIZE);
 	return 0;
 }
 
@@ -92,28 +95,35 @@ Codec :: decode_message(std::unique_ptr<Message>& m, uint8_t* src, int src_len) 
 		// No encryption. Just verify hash.
 		uint8_t h[64];
 		crypto_hash(h,
-			src+NONCE_HASH_OFFSET+NONCE_HASH_SIZE,
-			src_len-NONCE_HASH_OFFSET-NONCE_HASH_SIZE);
-		if (memcmp(h, src+NONCE_HASH_OFFSET, NONCE_HASH_SIZE) != 0) {
+			src + PAYLOAD_OFFSET,
+			src_len - PAYLOAD_OFFSET);
+		if (memcmp(h, src + NONCE_HASH_OFFSET, NONCE_HASH_SIZE) != 0) {
 			return -2;
 		}
 	} else {
-		std::string nonce((const char*)src+NONCE_HASH_OFFSET, NONCE_HASH_SIZE);
-		std::string c(0, crypto_secretbox_BOXZEROBYTES);
-		c += std::string((const char*)src+NONCE_HASH_OFFSET+NONCE_HASH_SIZE,
-			src_len-NONCE_HASH_OFFSET-NONCE_HASH_SIZE);
-		std::string message_data(0, c.size());
-		if (crypto_secretbox_open(
-			(uint8_t*)message_data.data(),
-			(uint8_t*)c.data(),
-			c.size(),
-			(uint8_t*)nonce.data(),
-			(uint8_t*)m_key.data()) < 0) {
-			return -3;
+		uint8_t* nonce = src+NONCE_HASH_OFFSET;
+		int payload_size = src_len - PAYLOAD_OFFSET;
+		int clen = payload_size + crypto_secretbox_BOXZEROBYTES;
+		std::vector<uint8_t> c(clen, 0);
+		std::vector<uint8_t> message_data(clen, 0);
+
+		for (int i = 0; i < payload_size; ++i) {
+			c[i + crypto_secretbox_BOXZEROBYTES] = src[i + PAYLOAD_OFFSET];
 		}
-		memcpy(src+NONCE_HASH_OFFSET+NONCE_HASH_SIZE,
-			message_data.data()+crypto_secretbox_ZEROBYTES,
-			message_data.size()-crypto_secretbox_ZEROBYTES);
+
+		int i = crypto_secretbox_open(
+			message_data.data(),
+			c.data(),
+			clen,
+			nonce,
+			(uint8_t*)m_key.data());
+		if (i < 0) {
+			return -1;
+		}
+
+		for (int i = 0; i < payload_size - MSG_PADDING_SIZE; ++i) {
+			src[i + PAYLOAD_OFFSET] = message_data[i + crypto_secretbox_ZEROBYTES];
+		}
 	}
 
 	// Peek at the message type
@@ -147,23 +157,35 @@ Codec :: pack_message(const Message* m, uint8_t* dest, int dest_len) {
 		// No encryption. Just compute a checksum.
 		uint8_t h[64];
 		crypto_hash(h,
-			dest+NONCE_HASH_OFFSET+NONCE_HASH_SIZE,
-			m->packed_size()-NONCE_HASH_OFFSET-NONCE_HASH_SIZE);
-		memcpy(dest+NONCE_HASH_OFFSET, h, NONCE_HASH_SIZE);
+			dest+PAYLOAD_OFFSET,
+			m->packed_size()-PAYLOAD_OFFSET);
+		memcpy(dest + NONCE_HASH_OFFSET, h, NONCE_HASH_SIZE);
 	} else {
-		std::string nonce(0, NONCE_HASH_SIZE);
-		randombytes((uint8_t*)nonce.data(), NONCE_HASH_SIZE);
-		std::string message_data(0, crypto_secretbox_ZEROBYTES);
-		message_data += std::string((const char*)dest+NONCE_HASH_OFFSET+NONCE_HASH_SIZE,
-			m->packed_size()-NONCE_HASH_OFFSET-NONCE_HASH_SIZE);
-		std::string c(0, message_data.size());
+		// Initialize nonce.
+		uint8_t n[NONCE_HASH_SIZE];
+		randombytes(n, NONCE_HASH_SIZE);
+		for (int i = 0; i < NONCE_HASH_SIZE; i++) {
+			dest[i + NONCE_HASH_OFFSET] = n[i];
+		}
+		int payload_size = m->packed_size() - PAYLOAD_OFFSET - MSG_PADDING_SIZE;
+		int mlen = payload_size + crypto_secretbox_ZEROBYTES;
+		std::vector<uint8_t> message_data(mlen, 0);
+		std::vector<uint8_t> c(mlen, 0);
+		for (int i = 0; i < payload_size; ++i) {
+			message_data[i + crypto_secretbox_ZEROBYTES] = dest[i + PAYLOAD_OFFSET];
+		}
+
 		crypto_secretbox(
-			(uint8_t*)c.data(),
-			(uint8_t*)message_data.data(),
-			message_data.size(),
-			(uint8_t*)nonce.data(),
+			c.data(),
+			message_data.data(),
+			mlen,
+			n,
 			(uint8_t*)m_key.data());
-		memcpy(dest+NONCE_HASH_OFFSET+NONCE_HASH_SIZE, c.data(), c.size()-crypto_secretbox_BOXZEROBYTES);
+
+		assert(mlen - crypto_secretbox_BOXZEROBYTES == payload_size + MSG_PADDING_SIZE);
+		for (int i = 0; i < mlen-crypto_secretbox_BOXZEROBYTES; ++i) {
+			dest[i + PAYLOAD_OFFSET] = c[i + crypto_secretbox_BOXZEROBYTES];
+		}
 	}
 	return 0;
 }

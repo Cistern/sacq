@@ -117,6 +117,9 @@ public:
 		}
 		int size = msg->packed_size();
 		auto buf = new uint8_t[size];
+		for (int i = 0; i < size; ++i) {
+			buf[i] = 0;
+		}
 		uv_buf_t a[] = {
 			{.base = (char*)buf, .len = (size_t)size}
 		};

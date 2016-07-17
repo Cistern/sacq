@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(libab)
 SET(CMAKE_C_FLAGS "-fPIC -march=native")
 SET(CMAKE_CXX_FLAGS "-std=c++14 -fPIC -march=native")
+set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(
 	src
