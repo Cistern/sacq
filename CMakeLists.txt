@@ -11,7 +11,6 @@ include_directories(
 	dep/libuv/include
 )
 
-add_subdirectory(dep/cryptopp)
 add_subdirectory(dep/libuv)
 
 add_executable(main
@@ -20,14 +19,15 @@ add_executable(main
 
 add_library(ab SHARED
 	src/message/message.cc
+	src/message/randombytes.cc
 	src/peer/peer.cc
 	src/node/node.cc
 	src/node/role.cc
 	src/c.cc
+	dep/tweetnacl/tweetnacl.c
 )
 
 target_link_libraries(ab uv)
-target_link_libraries(ab cryptopp-static)
 target_link_libraries(main ab)
 
 install(TARGETS ab DESTINATION lib)

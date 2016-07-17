@@ -2,10 +2,12 @@
 
 #include <string>
 #include <cassert>
-#include <cryptopp/sha3.h>
-#include <cryptopp/osrng.h>
+#include <cstdlib>
+#include <iostream>
 
 #include "message.hpp"
+
+const int KEY_SIZE = 32;
 
 class Codec {
 public:
@@ -21,15 +23,11 @@ public:
 			m_key = "";
 			return;
 		}
-		if (key.size() == CryptoPP::SHA3_256::DIGESTSIZE) {
-			m_key = key;
-			return;
+		if (key.size() != KEY_SIZE) {
+			std::cerr << "libab: invalid encryption key" << std::endl;
+			exit(1);
 		}
-		CryptoPP::SHA3_256 hash;
-		uint8_t digest[CryptoPP::SHA3_256::DIGESTSIZE];
-		hash.Update((const uint8_t*)key.c_str(), key.size());
-		hash.Final(digest);
-		m_key = std::string((const char*)digest, CryptoPP::SHA3_256::DIGESTSIZE);
+		m_key = key;
 	}
 
 	int
@@ -42,5 +40,4 @@ public:
 	decode_message_length(uint8_t* src, int src_len);
 private:
 	std::string                    m_key;
-	CryptoPP::AutoSeededRandomPool m_rng;
 }; // Codec

@@ -89,8 +89,7 @@ public:
 	uint8_t  type;
 	uint8_t  flags; // Reserved
 	uint64_t message_id;
-	uint8_t  iv[16];
-	uint8_t  hmac[32];
+	uint8_t  nonce_hash[32];
 };
 
 class IdentityRequest : public Message
