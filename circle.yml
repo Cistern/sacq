@@ -9,7 +9,6 @@ dependencies:
   override:
     - cd build && make -t dep || true
     - cd build && make uv -j
-    - cd build && make cryptopp-static
   cache_directories:
     - "build/dep"
 test:
