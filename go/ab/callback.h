@@ -16,5 +16,5 @@ void on_leader_change_go_cb_gateway(uint64_t leader_id, void* cb_data);
 
 void set_callbacks(ab_callbacks_t* callbacks);
 
-void append_go_gateway(ab_node_t* n, char* data, int data_len, void* argPtr);
+void append_go_gateway(ab_node_t* n, char* data, int data_len, int callbackNum);
 void appendGoCb(int status, uint64_t round, uint64_t commit, void* cb_data);
