@@ -1,6 +1,8 @@
 #include <string>
 #include <signal.h>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 #include <cpl/flags.hpp>
 #include <cpl/net/sockaddr.hpp>
@@ -55,20 +57,25 @@ main(int argc, char* argv[]) {
 	}
 
 	ab_callbacks_t callbacks;
-	Node n(id, cluster_size, callbacks, nullptr);
-	n.set_key(key);
-	if (n.start(addr_str) < 0) {
+	auto n = std::make_unique<Node>(id, cluster_size, callbacks, nullptr);
+	n->set_key(key);
+	if (n->start(addr_str) < 0) {
 		std::cerr << "failed to start" << std::endl;
 		return 1;
 	}
 	std::cerr << "listening on " << addr_str << " with ID " << id << std::endl;
 
 	for (int i = 0; i < peer_addrs.size(); i++) {
-		n.connect_to_peer(peer_addrs[i]);
+		n->connect_to_peer(peer_addrs[i]);
 	}
 
-	n.run();
+	std::thread t([&n]() {
+		n->run();
+	});
 
+	std::this_thread::sleep_for(std::chrono::seconds(3));
+	n = nullptr;
+	t.join();
 	// Unreachable
-	return 1;
+	return 0;
 }
