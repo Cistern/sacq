@@ -74,8 +74,9 @@ main(int argc, char* argv[]) {
 	});
 
 	std::this_thread::sleep_for(std::chrono::seconds(3));
-	n = nullptr;
+	n->shutdown();
 	t.join();
+	n = nullptr;
 	// Unreachable
 	return 0;
 }

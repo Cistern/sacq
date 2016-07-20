@@ -59,6 +59,7 @@ ab_confirm_append(ab_node_t* node, uint64_t round, uint64_t commit) {
 
 int
 ab_destroy(ab_node_t* node) {
+	node->rep->shutdown();
 	delete node->rep;
 	delete node;
 	return 0;

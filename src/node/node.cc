@@ -54,20 +54,20 @@ Node :: connect_to_peer(cpl::net::SockAddr& addr) {
 
 void
 Node :: run() {
+	m_lock->lock();
 	m_timer = std::make_unique<uv_timer_t>();
 	uv_timer_init(m_uv_loop.get(), m_timer.get());
 	m_timer->data = this;
 	uv_timer_start(m_timer.get(), [](uv_timer_t* timer) {
 		auto self = (Node*)timer->data;
-		if (self == nullptr) {
-			return;
-		}
 		self->periodic();
 	},
 	16, 16);
 	if (uv_run(m_uv_loop.get(), UV_RUN_DEFAULT) < 0) {
+		m_lock->unlock();
 		return;
 	}
+	m_lock->unlock();
 }
 
 void
@@ -89,9 +89,6 @@ Node ::	on_connect(uv_stream_t* server, int status) {
 
 void
 Node :: periodic() {
-	if (!m_active) {
-		return;
-	}
 	// Clean up the registry
 	m_peer_registry->cleanup();
 	uint64_t now = uv_hrtime();

@@ -74,9 +74,9 @@ Peer :: init_loop_handles()
 {
 	m_tcp->data = this;
 	m_loop = m_tcp->loop;
-	uv_timer_init(m_loop, &m_timer);
-	m_timer.data = this;
-	uv_timer_start(&m_timer, [](uv_timer_t* timer) {
+	uv_timer_init(m_loop, m_timer);
+	m_timer->data = this;
+	uv_timer_start(m_timer, [](uv_timer_t* timer) {
 		auto self = (Peer*)timer->data;
 		self->periodic();
 	}, 16, 16);

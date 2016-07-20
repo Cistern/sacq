@@ -21,6 +21,7 @@ public:
 	, m_send_to_node(send_to_node)
 	, m_active(true)
 	, m_tcp(std::move(conn))
+	, m_timer(new uv_timer_t)
 	, m_valid(false)
 	, m_node_ident_msg(node_ident_msg)
 	{
@@ -36,6 +37,7 @@ public:
 	, m_send_to_node(send_to_node)
 	, m_active(false)
 	, m_tcp(std::move(conn))
+	, m_timer(new uv_timer_t)
 	, m_valid(true)
 	, m_address(addr.str())
 	, m_node_ident_msg(node_ident_msg)
@@ -152,8 +154,16 @@ public:
 
 	~Peer()
 	{
-		uv_timer_stop(&m_timer);
-		uv_close((uv_handle_t*)(&m_timer), [](uv_handle_t* handle) {});
+		uv_timer_stop(m_timer);
+		uv_close((uv_handle_t*)(m_timer), [](uv_handle_t* handle) {
+			delete handle;
+		});
+		if (m_tcp != nullptr) {
+			auto old_handle = m_tcp.release();
+			uv_close((uv_handle_t*)old_handle, [](uv_handle_t* handle) {
+				delete handle;
+			});
+		}
 	}
 
 private:
@@ -178,7 +188,7 @@ private:
 	bool                                m_active;
 	bool                                m_valid;
 	std::unique_ptr<uv_tcp_t>           m_tcp;
-	uv_timer_t                          m_timer;
+	uv_timer_t*                         m_timer;
 	uv_loop_t*                          m_loop;
 	int                                 m_index;
 	uint64_t                            m_id;

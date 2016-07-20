@@ -30,8 +30,7 @@ public:
 	, m_trusted_peer(0)
 	, m_last_leader_active(uv_hrtime())
 	, m_role(std::make_unique<Role>(*m_peer_registry, id, cluster_size))
-	, m_lock(new std::mutex)
-	, m_active(true)
+	, m_lock(std::make_unique<std::mutex>())
 	{
 		m_role->set_callbacks(callbacks, callbacks_data);
 	}
@@ -108,51 +107,42 @@ public:
 		m_codec->set_key(key);
 	}
 
-	~Node()
+	void
+	shutdown()
 	{
-		m_lock->lock();
-		m_active = false;
-		auto async = new uv_async_t;
-		void** pointers = new void*[7];
-		pointers[0] = nullptr;
-		pointers[1] = m_peer_registry.release();
-		pointers[2] = m_timer.release();
-		pointers[3] = m_tcp.release();
-		pointers[4] = m_uv_loop.release();
-		pointers[5] = m_lock;
-		pointers[6] = async;
-		async->data = pointers;
-		uv_async_init((uv_loop_t*)pointers[4], async, [](uv_async_t* handle) {
-			auto pointers = (void**)(handle->data);
-			auto loop = (uv_loop_t*)pointers[4];
-			uv_stop(loop);
-			auto timer = (uv_timer_t*)(pointers[2]);
-			timer->data = pointers;
+		uv_async_init(m_uv_loop.get(), &m_async, [](uv_async_t* handle) {
+			auto self = (Node*)(handle->data);
+			auto timer = self->m_timer.get();
 			uv_timer_stop(timer);
-			uv_close((uv_handle_t*)timer, [](uv_handle_t* handle) {
-				auto pointers = (void**)(handle->data);
-				std::cerr << "deleted timer" << std::endl;
-				auto tcp = (uv_tcp_t*)(pointers[3]);
-				tcp->data = pointers;
-				uv_close((uv_handle_t*)tcp, [](uv_handle_t* handle) {
-					std::cerr << "deleted tcp handle" << std::endl;
-					auto pointers = (void**)(handle->data);
-					auto loop = (uv_loop_t*)pointers[4];
-					auto mutex = (std::mutex*)pointers[5];
-					uv_loop_close(loop);
-					mutex->unlock();
 
-					delete (void**)pointers[1];
-					delete (void**)pointers[2];
-					delete (void**)pointers[3];
-					delete (void**)pointers[4];
-					delete (void**)pointers[5];
-					delete (void**)pointers[6];
-					delete pointers;
+			uv_close((uv_handle_t*)timer, [](uv_handle_t* handle) {
+				auto self = (Node*)(handle->data);
+				auto tcp = self->m_tcp.get();
+				auto loop = self->m_uv_loop.get();
+
+				self->m_peer_registry = nullptr;
+
+				uv_close((uv_handle_t*)tcp, [](uv_handle_t* handle) {
+					auto self = (Node*)(handle->data);
+					auto loop = self->m_uv_loop.get();
+
+					uv_walk(loop, [](uv_handle_t* handle, void* arg) {
+						if (uv_is_closing(handle) == 0) {
+							uv_close(handle, [](uv_handle_t* h){});
+						}
+					}, nullptr);
 				});
 			});
 		});
-		uv_async_send(async);
+		m_async.data = this;
+		uv_async_send(&m_async);
+	}
+
+	~Node()
+	{
+		m_lock->lock();
+		uv_loop_close(m_uv_loop.get());
+		m_lock->unlock();
 	}
 
 private:
@@ -172,8 +162,8 @@ private:
 	uint64_t                      m_last_leader_active;
 	std::unique_ptr<Role>         m_role; // TODO
 
-	bool                          m_active;
-	std::mutex*                   m_lock;
+	std::unique_ptr<std::mutex>   m_lock;
+	uv_async_t                    m_async;
 
 	void
 	periodic();
