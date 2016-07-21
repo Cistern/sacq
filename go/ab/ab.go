@@ -129,11 +129,15 @@ func (n *Node) SetCommitted(round, commit uint64) {
 }
 
 // Run initializes the event loop and runs the Node.
-// This function blocks forever (unless there is an error),
-// so you should start this in a separate goroutine.
+// This function blocks until the Node is shut down
+// or an error occurs starting the event loop, so you
+// should start this in a separate goroutine.
 func (n *Node) Run() error {
-	C.ab_run(n.ptr)
-	return errors.New("ab: event loop exited")
+	res := C.ab_run(n.ptr)
+	if int(res) < 0 {
+		return errors.New("ab: event loop exited with an error")
+	}
+	return nil
 }
 
 // Append broadcasts data to the cluster.
@@ -155,6 +159,17 @@ func (n *Node) Append(data string) (uint64, uint64, error) {
 // round and commit has been durably stored.
 func (n *Node) ConfirmAppend(round, commit uint64) {
 	C.ab_confirm_append(n.ptr, C.uint64_t(round), C.uint64_t(commit))
+}
+
+// Destroy stops the Node and frees up all of its resources.
+func (n *Node) Destroy() error {
+	registeredNodesLock.Lock()
+	defer registeredNodesLock.Unlock()
+	if int(C.ab_destroy(n.ptr)) < 0 {
+		return errors.New("ab: failed to destroy Node")
+	}
+	delete(registeredNodes, n.callbacksNum)
+	return nil
 }
 
 // cgo-related stuff 👇

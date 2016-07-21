@@ -68,6 +68,14 @@ public:
 	, m_cluster_size(cluster_size)
 	, m_commit(0)
 	, m_round(0)
+	, m_client_callbacks({
+		.on_append = nullptr,
+		.on_commit = nullptr,
+		.gained_leadership = nullptr,
+		.lost_leadership = nullptr,
+		.on_leader_change = nullptr
+	})
+	, m_client_callbacks_data(nullptr)
 	{
 	}
 

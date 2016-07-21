@@ -24,6 +24,7 @@ public:
 	, m_timer(new uv_timer_t)
 	, m_valid(false)
 	, m_node_ident_msg(node_ident_msg)
+	, m_pending_msg_size(0)
 	{
 		init_loop_handles();
 		run();
@@ -41,6 +42,7 @@ public:
 	, m_valid(true)
 	, m_address(addr.str())
 	, m_node_ident_msg(node_ident_msg)
+	, m_pending_msg_size(0)
 	{
 		init_loop_handles();
 

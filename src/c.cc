@@ -41,8 +41,7 @@ ab_connect_to_peer(ab_node_t* node, const char* address) {
 
 int
 ab_run(ab_node_t* node) {
-	node->rep->run();
-	return -1;
+	return node->rep->run();
 }
 
 int
@@ -59,8 +58,16 @@ ab_confirm_append(ab_node_t* node, uint64_t round, uint64_t commit) {
 
 int
 ab_destroy(ab_node_t* node) {
+	if (node == nullptr) {
+		return -1;
+	}
+	if (node->rep == nullptr) {
+		return -1;
+	}
+	// Shut down and clean up event loop.
 	node->rep->shutdown();
-	delete node->rep;
+	delete node->rep; // Blocks until the event loop stops.
 	delete node;
+	node = nullptr;
 	return 0;
 }

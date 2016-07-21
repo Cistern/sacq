@@ -52,9 +52,9 @@ Node :: connect_to_peer(cpl::net::SockAddr& addr) {
 	return;
 }
 
-void
+int
 Node :: run() {
-	m_lock->lock();
+	std::lock_guard<std::mutex> lock(*m_mutex);
 	m_timer = std::make_unique<uv_timer_t>();
 	uv_timer_init(m_uv_loop.get(), m_timer.get());
 	m_timer->data = this;
@@ -63,11 +63,7 @@ Node :: run() {
 		self->periodic();
 	},
 	16, 16);
-	if (uv_run(m_uv_loop.get(), UV_RUN_DEFAULT) < 0) {
-		m_lock->unlock();
-		return;
-	}
-	m_lock->unlock();
+	return uv_run(m_uv_loop.get(), UV_RUN_DEFAULT);
 }
 
 void

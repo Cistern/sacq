@@ -27,10 +27,11 @@ public:
 	, m_cluster_size(cluster_size)
 	, m_peer_registry(std::make_unique<PeerRegistry>())
 	, m_codec(std::make_shared<Codec>())
+	, m_index_counter(0)
 	, m_trusted_peer(0)
 	, m_last_leader_active(uv_hrtime())
 	, m_role(std::make_unique<Role>(*m_peer_registry, id, cluster_size))
-	, m_lock(std::make_unique<std::mutex>())
+	, m_mutex(std::make_unique<std::mutex>())
 	{
 		m_role->set_callbacks(callbacks, callbacks_data);
 	}
@@ -41,7 +42,7 @@ public:
 	start(std::string address);
 
 	// run starts the main processing routine.
-	void
+	int
 	run();
 
 	// connect_to_peer connects to a peer with the given
@@ -107,6 +108,7 @@ public:
 		m_codec->set_key(key);
 	}
 
+	// shutdown shuts down the Node's event loop and cleans up resources.
 	void
 	shutdown()
 	{
@@ -140,9 +142,8 @@ public:
 
 	~Node()
 	{
-		m_lock->lock();
+		std::lock_guard<std::mutex> lock(*m_mutex);
 		uv_loop_close(m_uv_loop.get());
-		m_lock->unlock();
 	}
 
 private:
@@ -162,7 +163,7 @@ private:
 	uint64_t                      m_last_leader_active;
 	std::unique_ptr<Role>         m_role; // TODO
 
-	std::unique_ptr<std::mutex>   m_lock;
+	std::unique_ptr<std::mutex>   m_mutex;
 	uv_async_t                    m_async;
 
 	void

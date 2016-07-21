@@ -73,7 +73,7 @@ main(int argc, char* argv[]) {
 		n->run();
 	});
 
-	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::this_thread::sleep_for(std::chrono::seconds(10));
 	n->shutdown();
 	t.join();
 	n = nullptr;
