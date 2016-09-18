@@ -17,6 +17,13 @@ Role :: periodic(uint64_t ts) {
 
 void
 Role :: periodic_leader(uint64_t ts) {
+	if (m_leader_data->m_pending_commit == 0) {
+		// No pending commit.
+		if (ts - m_leader_data->m_last_broadcast < 50e6) {
+			// Not enough time has passed to send a regular heartbeat.
+			return;
+		}
+	}
 	if (m_leader_data->m_acks.size() >= m_cluster_size/2) {
 		uint64_t max_commit = m_commit;
 		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
