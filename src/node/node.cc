@@ -62,7 +62,7 @@ Node :: run() {
 		auto self = (Node*)timer->data;
 		self->periodic();
 	},
-	16, 16);
+	50, 50);
 	return uv_run(m_uv_loop.get(), UV_RUN_DEFAULT);
 }
 

@@ -17,8 +17,7 @@ Role :: periodic(uint64_t ts) {
 
 void
 Role :: periodic_leader(uint64_t ts) {
-	if (ts - m_leader_data->m_last_broadcast > 50e6 &&
-		m_leader_data->m_acks.size() >= m_cluster_size/2) {
+	if (m_leader_data->m_acks.size() >= m_cluster_size/2) {
 		uint64_t max_commit = m_commit;
 		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
 			if (it->second > max_commit) {
@@ -242,6 +241,7 @@ Role :: handle_leader_active_ack(uint64_t ts, const LeaderActiveAck& msg) {
 
 	if (m_state == Leader) {
 		m_leader_data->m_acks[msg.id] = msg.committed;
+		periodic_leader(ts);
 	} else {
 		m_potential_leader_data->m_acks[msg.id] = msg.committed;
 	}
