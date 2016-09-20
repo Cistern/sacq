@@ -43,18 +43,18 @@ type CallbackHandler interface {
 	// OnAppend is called when a new message is broadcast.
 	// ConfirmAppend should be called with the same round and commit
 	// numbers to acknowledge the append.
-	OnAppend(round uint64, commit uint64, data string)
+	OnAppend(node *Node, round uint64, commit uint64, data string)
 	// OnCommit is called when the message with the given round and commit
 	// is guaranteed to be committed on a majority of nodes in the cluster.
-	OnCommit(round uint64, commit uint64)
+	OnCommit(node *Node, round uint64, commit uint64)
 	// GainedLeadership is called when the Node has gained leadership status
 	// and can broadcast new messages.
-	GainedLeadership()
+	GainedLeadership(node *Node)
 	// LostLeadership is called when the Node has lost leadership status.
-	LostLeadership()
+	LostLeadership(node *Node)
 	// OnLeaderChange is called when the Node's current leader changes.
 	// This may be called along with LostLeadership.
-	OnLeaderChange(leaderID uint64)
+	OnLeaderChange(node *Node, leaderID uint64)
 }
 
 // NewNode creates a new libab instance with the given ID, listen address, callback handler,
@@ -184,7 +184,7 @@ func onAppendGoCb(round C.uint64_t, commit C.uint64_t, str *C.char, length C.int
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnAppend(uint64(round), uint64(commit), C.GoStringN(str, length))
+	node.callbackHandler.OnAppend(node, uint64(round), uint64(commit), C.GoStringN(str, length))
 }
 
 //export onCommitGoCb
@@ -193,7 +193,7 @@ func onCommitGoCb(round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnCommit(uint64(round), uint64(commit))
+	node.callbackHandler.OnCommit(node, uint64(round), uint64(commit))
 }
 
 //export gainedLeadershipGoCb
@@ -202,7 +202,7 @@ func gainedLeadershipGoCb(p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.GainedLeadership()
+	node.callbackHandler.GainedLeadership(node)
 }
 
 //export lostLeadershipGoCb
@@ -211,7 +211,7 @@ func lostLeadershipGoCb(p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.LostLeadership()
+	node.callbackHandler.LostLeadership(node)
 }
 
 //export onLeaderChangeGoCb
@@ -220,7 +220,7 @@ func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnLeaderChange(uint64(id))
+	node.callbackHandler.OnLeaderChange(node, uint64(id))
 }
 
 //export appendGoCb
