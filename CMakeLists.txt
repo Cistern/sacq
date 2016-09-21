@@ -35,6 +35,7 @@ add_library(ab SHARED
 
 target_link_libraries(ab uv)
 target_link_libraries(main ab)
+target_link_libraries(abtest ab)
 
 install(TARGETS ab DESTINATION lib)
 install(FILES include/ab.h DESTINATION include)
