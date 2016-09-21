@@ -8,6 +8,7 @@
 #include "ab.h"
 #include "message/message.hpp"
 #include "peer_registry.hpp"
+#include "registry.hpp"
 
 enum State
 {
@@ -59,7 +60,7 @@ struct FollowerData
 class Role
 {
 public:
-	Role(PeerRegistry& registry, uint64_t id, int cluster_size)
+	Role(Registry& registry, uint64_t id, int cluster_size)
 	: m_registry(registry)
 	, m_state(Follower)
 	, m_follower_data(std::make_unique<FollowerData>())
@@ -135,6 +136,24 @@ public:
 		m_commit = commit;
 	}
 
+	State
+	state() const
+	{
+		return m_state;
+	}
+
+	uint64_t
+	commit() const
+	{
+		return m_commit;
+	}
+
+	uint64_t
+	round() const
+	{
+		return m_round;
+	}
+
 private:
 	void
 	periodic_leader(uint64_t ts);
@@ -146,7 +165,7 @@ private:
 	periodic_follower(uint64_t ts);
 
 private:
-	PeerRegistry& m_registry;
+	Registry&     m_registry;
 	uint64_t      m_id;
 	uint64_t      m_seq;
 	int           m_cluster_size;

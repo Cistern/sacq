@@ -101,7 +101,7 @@ Node :: handle_message(const Message* msg) {
 		m_peer_registry->set_identity(ident_msg.source, ident_msg.id, ident_msg.address);
 		break;
 	case MSG_IDENT_REQUEST:
-		m_peer_registry->send(msg->source, &ident_msg);
+		m_peer_registry->send_to_index(msg->source, &ident_msg);
 		break;
 	case MSG_LEADER_ACTIVE:
 		m_role->handle_leader_active(now, static_cast<const LeaderActiveMessage&>(*msg));

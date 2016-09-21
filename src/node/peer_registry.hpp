@@ -6,8 +6,9 @@
 #include <atomic>
 
 #include "peer/peer.hpp"
+#include "node/registry.hpp"
 
-class PeerRegistry
+class PeerRegistry : public Registry
 {
 	using shared_peer = std::shared_ptr<Peer>;
 
@@ -46,7 +47,7 @@ public:
 	}
 
 	void
-	send(int index, const Message* msg)
+	send_to_index(int index, const Message* msg)
 	{
 		auto peer = m_peers.find(index);
 		if (peer != m_peers.end()) {

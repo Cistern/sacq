@@ -191,7 +191,7 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		if (m_follower_data->m_pending_commit == msg.committed) {
 			m_follower_data->m_pending_commit = 0;
 			LeaderActiveAck ack(m_id, msg.seq, msg.committed, m_round);
-			m_registry.send(msg.source, &ack);
+			m_registry.send_to_index(msg.source, &ack);
 			if (m_follower_data->m_current_leader != msg.id) {
 				if (m_client_callbacks.on_leader_change != nullptr) {
 					m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
@@ -220,7 +220,7 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 
 	// Send ack.
 	LeaderActiveAck ack(m_id, msg.seq, m_commit, m_round);
-	m_registry.send(msg.source, &ack);
+	m_registry.send_to_index(msg.source, &ack);
 	if (m_follower_data->m_current_leader != msg.id) {
 		if (m_client_callbacks.on_leader_change != nullptr) {
 			m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
