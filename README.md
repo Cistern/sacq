@@ -5,8 +5,8 @@
 libab is a C library to broadcast messages to a cluster of nodes. libab also
 provides powerful properties for broadcasted messages:
 
-1. Each committed message is guaranteed to be present on a majority of the nodes.
-2. Messages are committed in order.
+1. Each successfully broadcasted message is guaranteed to be delivered to a majority of the nodes.
+2. Broadcasted messages are fully serialized through an elected leader.
 
 Traffic is sent over TCP with transparent reconnections.
 

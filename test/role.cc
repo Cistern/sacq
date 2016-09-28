@@ -9,7 +9,6 @@ TEST_CASE( "Default role values are valid", "[role]" ) {
 	Role role(reg, 1, 2);
 
 	REQUIRE( role.state() == Follower );
-	REQUIRE( role.commit() == 0 );
 	REQUIRE( role.round() == 0 );
 }
 
@@ -39,7 +38,6 @@ TEST_CASE( "Role becomes PotentialLeader after timeout", "[role]" ) {
 	// Role should be PotentialLeader now.
 
 	REQUIRE( role.state() == PotentialLeader );
-	REQUIRE( role.commit() == 0 );
 	REQUIRE( role.round() == 0 );
 
 	REQUIRE( broadcasted != nullptr );

@@ -208,30 +208,27 @@ public:
 	: Message(MSG_LEADER_ACTIVE)
 	, id(0)
 	, seq(0)
-	, committed(0)
 	, round(0)
 	, next(0)
 	, next_content("")
 	{
 	}
 
-	LeaderActiveMessage(uint64_t id, uint64_t seq, uint64_t committed, uint64_t round)
+	LeaderActiveMessage(uint64_t id, uint64_t seq, uint64_t round)
 	: Message(MSG_LEADER_ACTIVE)
 	, id(id)
 	, seq(seq)
-	, committed(committed)
 	, round(round)
 	, next(0)
 	, next_content("")
 	{
 	}
 
-	LeaderActiveMessage(uint64_t id, uint64_t seq, uint64_t committed, uint64_t round,
+	LeaderActiveMessage(uint64_t id, uint64_t seq, uint64_t round,
 		uint64_t next, std::string next_content)
 	: Message(MSG_LEADER_ACTIVE)
 	, id(id)
 	, seq(seq)
-	, committed(committed)
 	, round(round)
 	, next(next)
 	, next_content(next_content)
@@ -241,7 +238,7 @@ public:
 	inline int
 	body_size() const
 	{
-		return 8+8+8+8+8+4+next_content.size();
+		return 8+8+8+8+4+next_content.size();
 	}
 
 	inline int
@@ -253,8 +250,6 @@ public:
 		write64be(id, dest);
 		dest += 8;
 		write64be(seq, dest);
-		dest += 8;
-		write64be(committed, dest);
 		dest += 8;
 		write64be(round, dest);
 		dest += 8;
@@ -276,8 +271,6 @@ public:
 		src += 8;
 		seq = read64be(src);
 		src += 8;
-		committed = read64be(src);
-		src += 8;
 		round = read64be(src);
 		src += 8;
 		next = read64be(src);
@@ -294,7 +287,6 @@ public:
 public:
 	uint64_t    id;
 	uint64_t    seq;
-	uint64_t    committed;
 	uint64_t    round;
 	uint64_t    next;
 	std::string next_content;
@@ -307,16 +299,14 @@ public:
 	: Message(MSG_LEADER_ACTIVE_ACK)
 	, id(0)
 	, seq(0)
-	, committed(0)
 	, round(0)
 	{
 	}
 
-	LeaderActiveAck(uint64_t id, uint64_t seq, uint64_t committed, uint64_t round)
+	LeaderActiveAck(uint64_t id, uint64_t seq, uint64_t round)
 	: Message(MSG_LEADER_ACTIVE_ACK)
 	, id(id)
 	, seq(seq)
-	, committed(committed)
 	, round(round)
 	{
 	}
@@ -324,7 +314,7 @@ public:
 	inline int
 	body_size() const
 	{
-		return 8+8+8+8;
+		return 8+8+8;
 	}
 
 	inline int
@@ -336,8 +326,6 @@ public:
 		write64be(id, dest);
 		dest += 8;
 		write64be(seq, dest);
-		dest += 8;
-		write64be(committed, dest);
 		dest += 8;
 		write64be(round, dest);
 		return 0;
@@ -353,8 +341,6 @@ public:
 		src += 8;
 		seq = read64be(src);
 		src += 8;
-		committed = read64be(src);
-		src += 8;
 		round = read64be(src);
 		return 0;
 	}
@@ -362,6 +348,5 @@ public:
 public:
 	uint64_t id;
 	uint64_t seq;
-	uint64_t committed;
 	uint64_t round;
 };

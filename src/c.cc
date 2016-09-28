@@ -18,11 +18,6 @@ ab_set_key(ab_node_t* node, const char* key, int key_len) {
 	node->rep->set_key(key_str);
 }
 
-void
-ab_set_committed(ab_node_t* node, uint64_t round, uint64_t commit) {
-	node->rep->set_committed(round, commit);
-}
-
 int
 ab_listen(ab_node_t* node, const char* address) {
 	return node->rep->start(address);
@@ -52,8 +47,8 @@ ab_append(ab_node_t* node, const char* content, int content_len,
 }
 
 void
-ab_confirm_append(ab_node_t* node, uint64_t round, uint64_t commit) {
-	node->rep->confirm_append(round, commit);
+ab_confirm_append(ab_node_t* node, uint64_t round) {
+	node->rep->confirm_append(round);
 }
 
 int

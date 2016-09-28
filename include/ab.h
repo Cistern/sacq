@@ -46,13 +46,10 @@ typedef struct ab_node_t ab_node_t;
 // to avoid blocking actions.
 typedef struct {
 	// on_append is called when a new message is broadcasted from a leader.
-	// The round number should monotonically increase, but the commit number may be repeated.
+	// The round number should monotonically increase.
 	// The caller maintains ownership of the data pointer.
 	// ab_confirm_append should be called after the message is durably stored.
-	void (*on_append)(uint64_t round, uint64_t commit, const char* data, int data_len, void* cb_data);
-	// on_commit is called when the message with the given round and commit number is verified to be
-	// received by a majority of the cluster and stored durably.
-	void (*on_commit)(uint64_t round, uint64_t commit, void* cb_data);
+	void (*on_append)(uint64_t round, const char* data, int data_len, void* cb_data);
 	// gained_leadership is called when the node gains the leadership role.
 	void (*gained_leadership)(void* cb_data);
 	// lost_leadership is called when the node loses the leadership role.
@@ -76,11 +73,6 @@ ab_node_create(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* da
 void
 ab_set_key(ab_node_t* node, const char* key, int key_len);
 
-// ab_set_committed initializes the node's round and commit numbers. This should be called
-// with the appropriate numbers on recovery.
-void
-ab_set_committed(ab_node_t* node, uint64_t round, uint64_t commit);
-
 // ab_listen sets the listen address for the node.
 // address can either be an IPv4 or an IPv6 address in the following forms:
 // - 127.0.0.1:2020
@@ -98,9 +90,7 @@ int
 ab_run(ab_node_t* node);
 
 // ab_append_cb is the callback passed to ab_append. status is negative on failure.
-// On success, round and commit are the corresponding round and commit numbers for the
-// broadcasted message.
-typedef void (*ab_append_cb)(int status, uint64_t round, uint64_t commit, void* data);
+typedef void (*ab_append_cb)(int status, void* data);
 
 // ab_append broadcasts a message with the given content to the rest of the cluster.
 // ab_append_cb is called on success or failure with the provided data pointer.
@@ -109,7 +99,7 @@ ab_append(ab_node_t* node, const char* content, int content_len, ab_append_cb cb
 
 // ab_confirm_append should be called when a message is durably stored after on_append is called.
 void
-ab_confirm_append(ab_node_t* node, uint64_t round, uint64_t commit);
+ab_confirm_append(ab_node_t* node, uint64_t round);
 
 // ab_destroy frees the memory allocated for the node.
 int

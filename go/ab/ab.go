@@ -31,8 +31,6 @@ type Node struct {
 // Results of ab_append() as a struct.
 type appendResult struct {
 	status int
-	round  uint64
-	commit uint64
 }
 
 // CallbackHandler is an interface that is used by a Node
@@ -41,12 +39,9 @@ type appendResult struct {
 // since that will block the entire event loop.
 type CallbackHandler interface {
 	// OnAppend is called when a new message is broadcast.
-	// ConfirmAppend should be called with the same round and commit
-	// numbers to acknowledge the append.
-	OnAppend(node *Node, round uint64, commit uint64, data string)
-	// OnCommit is called when the message with the given round and commit
-	// is guaranteed to be committed on a majority of nodes in the cluster.
-	OnCommit(node *Node, round uint64, commit uint64)
+	// ConfirmAppend should be called with the same round
+	// number to acknowledge the append.
+	OnAppend(node *Node, round uint64, data string)
 	// GainedLeadership is called when the Node has gained leadership status
 	// and can broadcast new messages.
 	GainedLeadership(node *Node)
@@ -122,12 +117,6 @@ func (n *Node) AddPeer(address string) error {
 	return nil
 }
 
-// SetCommitted sets the latest committed round and commit number for this Node.
-// This should be called before Run.
-func (n *Node) SetCommitted(round, commit uint64) {
-	C.ab_set_committed(n.ptr, C.uint64_t(round), C.uint64_t(commit))
-}
-
 // Run initializes the event loop and runs the Node.
 // This function blocks until the Node is shut down
 // or an error occurs starting the event loop, so you
@@ -141,8 +130,7 @@ func (n *Node) Run() error {
 }
 
 // Append broadcasts data to the cluster.
-// The returned values are the new round and commit, and an error.
-func (n *Node) Append(data string) (uint64, uint64, error) {
+func (n *Node) Append(data string) error {
 	n.appendResult = make(chan appendResult)
 	cData := C.CString(data)
 	defer C.free(unsafe.Pointer(cData))
@@ -150,15 +138,15 @@ func (n *Node) Append(data string) (uint64, uint64, error) {
 	result := <-n.appendResult
 	n.appendResult = nil
 	if result.status == 0 {
-		return result.round, result.commit, nil
+		return nil
 	}
-	return 0, 0, errors.New("ab: append failed")
+	return errors.New("ab: append failed")
 }
 
 // ConfirmAppend confirms that the message corresponding to the given
-// round and commit has been durably stored.
-func (n *Node) ConfirmAppend(round, commit uint64) {
-	C.ab_confirm_append(n.ptr, C.uint64_t(round), C.uint64_t(commit))
+// round has been durably stored.
+func (n *Node) ConfirmAppend(round uint64) {
+	C.ab_confirm_append(n.ptr, C.uint64_t(round))
 }
 
 // Destroy stops the Node and frees up all of its resources.
@@ -179,21 +167,12 @@ var registrationCounter int
 var registeredNodes = map[int]*Node{}
 
 //export onAppendGoCb
-func onAppendGoCb(round C.uint64_t, commit C.uint64_t, str *C.char, length C.int, p unsafe.Pointer) {
+func onAppendGoCb(round C.uint64_t, str *C.char, length C.int, p unsafe.Pointer) {
 	i := *(*int)(p)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnAppend(node, uint64(round), uint64(commit), C.GoStringN(str, length))
-}
-
-//export onCommitGoCb
-func onCommitGoCb(round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
-	i := *(*int)(p)
-	registeredNodesLock.RLock()
-	defer registeredNodesLock.RUnlock()
-	node := registeredNodes[i]
-	node.callbackHandler.OnCommit(node, uint64(round), uint64(commit))
+	node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length))
 }
 
 //export gainedLeadershipGoCb
@@ -224,7 +203,7 @@ func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 }
 
 //export appendGoCb
-func appendGoCb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Pointer) {
+func appendGoCb(status C.int, p unsafe.Pointer) {
 	i := int(*(*C.int)(p))
 	C.free(p)
 	registeredNodesLock.RLock()
@@ -233,8 +212,6 @@ func appendGoCb(status C.int, round C.uint64_t, commit C.uint64_t, p unsafe.Poin
 	if node != nil && node.appendResult != nil {
 		node.appendResult <- appendResult{
 			status: int(status),
-			round:  uint64(round),
-			commit: uint64(commit),
 		}
 	}
 }
