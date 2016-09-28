@@ -31,15 +31,19 @@ Role :: periodic_leader(uint64_t ts) {
 				max_round = it->second;
 			}
 		}
-		if (max_round == m_leader_data->m_pending_round && max_round > 0) {
+		auto pending_round_votes = 0;
+		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
+			if (it->second == max_round) {
+				pending_round_votes++;
+			}
+		}
+		if (max_round == m_leader_data->m_pending_round && max_round > 0 &&
+			pending_round_votes >= m_cluster_size/2) {
 			if (m_leader_data->m_callback != nullptr) {
 				// Append was confirmed by a majority.
 				m_leader_data->m_callback(0, m_leader_data->m_callback_data);
 				m_leader_data->m_callback = nullptr;
 				m_leader_data->m_callback_data = nullptr;
-			} else {
-				// Majority have acknowledged the round.
-				// Report that to the client
 				m_round = m_leader_data->m_pending_round;
 				m_leader_data->m_pending_round = 0;
 			}
