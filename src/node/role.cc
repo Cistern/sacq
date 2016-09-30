@@ -199,6 +199,11 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		m_round = msg.round;
 	}
 
+	if (m_follower_data->m_pending_round != 0) {
+		// We haven't confirmed a previous append.
+		// Ignore all other messages.
+	}
+
 	if (msg.next != 0) {
 		// Append message
 		if (m_client_callbacks.on_append != nullptr) {

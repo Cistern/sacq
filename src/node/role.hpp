@@ -97,6 +97,7 @@ public:
 		// Send ack.
 		LeaderActiveAck ack(m_id, m_seq, round);
 		m_registry.send_to_id(m_follower_data->m_current_leader, &ack);
+		m_follower_data->m_pending_round = 0;
 	}
 
 	void
