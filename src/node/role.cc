@@ -25,6 +25,7 @@ Role :: periodic_leader(uint64_t ts) {
 		}
 	}
 	if (m_leader_data->m_acks.size() >= m_cluster_size/2) {
+		// Received required votes.
 		uint64_t max_round = m_round;
 		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
 			if (it->second > max_round) {
@@ -37,8 +38,26 @@ Role :: periodic_leader(uint64_t ts) {
 				pending_round_votes++;
 			}
 		}
-		if (max_round == m_leader_data->m_pending_round && max_round > 0 &&
-			pending_round_votes >= m_cluster_size/2) {
+
+		if (m_leader_data->m_pending_round > 0) {
+			// There's a pending append.
+			if (max_round != m_leader_data->m_pending_round ||
+				pending_round_votes < m_cluster_size/2) {
+				// Not enough votes for the pending append
+				// We need to forfeit leadership.
+				if (m_leader_data->m_callback != nullptr) {
+					// Append was not confirmed by a majority.
+					m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
+					m_leader_data->m_callback = nullptr;
+					m_leader_data->m_callback_data = nullptr;
+					m_leader_data->m_pending_round = 0;
+				}
+				m_leader_data = nullptr;
+				m_state = PotentialLeader;
+				m_potential_leader_data = std::make_unique<PotentialLeaderData>();
+				return;
+			}
+
 			if (m_leader_data->m_callback != nullptr) {
 				// Append was confirmed by a majority.
 				m_leader_data->m_callback(0, m_leader_data->m_callback_data);
@@ -48,7 +67,9 @@ Role :: periodic_leader(uint64_t ts) {
 				m_leader_data->m_pending_round = 0;
 			}
 		} else {
-			if (m_leader_data->m_pending_round == 0 && max_round > m_round) {
+			// No pending append
+			// This is just a regular heartbeat ack.
+			if (max_round > m_round) {
 				m_round = max_round;
 			}
 		}
@@ -157,7 +178,7 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 
 	if (m_id < msg.id) {
 		// We're more authoritative.
-		m_follower_data->m_pending_round = 0;
+		// Ignore this message.
 		return;
 	}
 
@@ -168,30 +189,18 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 			m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
 		}
 		m_follower_data->m_pending_round = 0;
-	} else {
-		if (m_follower_data->m_current_leader < msg.id) {
-			return;
-		}
+	} else if (m_follower_data->m_current_leader < msg.id) {
+		// Less authoritative than the current leader.
+		// Ignore this message.
+		return;
 	}
 
 	if (msg.round > m_round) {
-		if (m_follower_data->m_pending_round == msg.round) {
-			m_follower_data->m_pending_round = 0;
-			LeaderActiveAck ack(m_id, msg.seq, msg.round);
-			m_registry.send_to_index(msg.source, &ack);
-			if (m_follower_data->m_current_leader != msg.id) {
-				if (m_client_callbacks.on_leader_change != nullptr) {
-					m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
-				}
-			}
-			m_follower_data->m_current_leader = msg.id;
-			m_follower_data->m_last_leader_active = ts;
-			return;
-		}
 		m_round = msg.round;
 	}
 
 	if (msg.next != 0) {
+		// Append message
 		if (m_client_callbacks.on_append != nullptr) {
 			m_seq = msg.seq;
 			m_client_callbacks.on_append(msg.next, msg.next_content.c_str(),
@@ -202,7 +211,8 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		}
 	}
 
-	// Send ack.
+	// Normal heartbeat
+	// Send ack
 	LeaderActiveAck ack(m_id, msg.seq, m_round);
 	m_registry.send_to_index(msg.source, &ack);
 	if (m_follower_data->m_current_leader != msg.id) {
