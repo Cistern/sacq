@@ -88,15 +88,15 @@ Role :: periodic_leader(uint64_t ts) {
 	if (ts - m_leader_data->m_last_broadcast > 300e6) {
 		// It's been over 300 ms since the last broadcast.
 		// Didn't get a majority. We're not a leader anymore.
-		if (m_client_callbacks.lost_leadership != nullptr) {
-			m_client_callbacks.lost_leadership(m_client_callbacks_data);
-		}
 		if (m_leader_data->m_callback != nullptr) {
 			// Append was not confirmed by a majority.
 			m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
 			m_leader_data->m_callback = nullptr;
 			m_leader_data->m_callback_data = nullptr;
 			m_leader_data->m_pending_round = 0;
+		}
+		if (m_client_callbacks.lost_leadership != nullptr) {
+			m_client_callbacks.lost_leadership(m_client_callbacks_data);
 		}
 		m_leader_data = nullptr;
 		m_state = PotentialLeader;
