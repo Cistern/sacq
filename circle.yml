@@ -17,3 +17,5 @@ test:
     - cd build && sudo make install
     - cd go/ab && go build
     - cd build && CTEST_OUTPUT_ON_FAILURE=true make test
+  post:
+    - mv build/libab.so $CIRCLE_ARTIFACTS/
