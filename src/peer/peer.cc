@@ -17,9 +17,7 @@ Peer :: run() {
 				uv_close((uv_handle_t*)stream, [](uv_handle_t* handle) {
 					auto self = (Peer*)handle->data;
 					self->m_active = false;
-					if (self->m_valid) {
-						self->m_tcp = nullptr;
-					}
+					self->m_tcp = nullptr;
 					// Make sure our reconnect time is at least a few seconds
 					// after now.
 					self->m_last_reconnect = uv_hrtime();
