@@ -2,6 +2,7 @@ package ab
 
 import (
 	"errors"
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -21,7 +22,7 @@ type Node struct {
 	// C handle
 	ptr *C.ab_node_t
 	// Index of this within the registeredNodes map
-	callbacksNum int
+	callbacksNum *C.int
 	// User-provided callback handlers
 	callbackHandler CallbackHandler
 	// Channel to use for the result of append.
@@ -67,7 +68,11 @@ func NewNode(id uint64,
 	// Create a new Go handle
 	n := &Node{
 		callbackHandler: callbackHandler,
+		callbacksNum:    (*C.int)(C.malloc(C.sizeof_int)),
 	}
+	runtime.SetFinalizer(n, func(node *Node) {
+		C.free(unsafe.Pointer(node.callbacksNum))
+	})
 
 	// Set C callbacks
 	cCallbacks := C.ab_callbacks_t{}
@@ -78,11 +83,11 @@ func NewNode(id uint64,
 	defer registeredNodesLock.Unlock()
 	registrationCounter++
 	registeredNodes[registrationCounter] = n
-	n.callbacksNum = registrationCounter
+	*n.callbacksNum = C.int(registrationCounter)
 
 	// Create the ab_node_t handle
 	ptr := C.ab_node_create(C.uint64_t(id), C.int(clusterSize), cCallbacks,
-		unsafe.Pointer(&n.callbacksNum))
+		unsafe.Pointer(n.callbacksNum))
 
 	// Start listening
 	listenStr := C.CString(listen)
@@ -134,7 +139,7 @@ func (n *Node) Append(data string) error {
 	n.appendResult = make(chan appendResult)
 	cData := C.CString(data)
 	defer C.free(unsafe.Pointer(cData))
-	C.append_go_gateway(n.ptr, cData, C.int(len(data)), C.int(n.callbacksNum))
+	C.append_go_gateway(n.ptr, cData, C.int(len(data)), *n.callbacksNum)
 	result := <-n.appendResult
 	n.appendResult = nil
 	if result.status == 0 {
@@ -156,7 +161,7 @@ func (n *Node) Destroy() error {
 	if int(C.ab_destroy(n.ptr)) < 0 {
 		return errors.New("ab: failed to destroy Node")
 	}
-	delete(registeredNodes, n.callbacksNum)
+	delete(registeredNodes, int(*n.callbacksNum))
 	return nil
 }
 
@@ -172,7 +177,9 @@ func onAppendGoCb(round C.uint64_t, str *C.char, length C.int, p unsafe.Pointer)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length))
+	if node.callbackHandler != nil {
+		node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length))
+	}
 }
 
 //export gainedLeadershipGoCb
@@ -181,7 +188,9 @@ func gainedLeadershipGoCb(p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.GainedLeadership(node)
+	if node.callbackHandler != nil {
+		node.callbackHandler.GainedLeadership(node)
+	}
 }
 
 //export lostLeadershipGoCb
@@ -190,7 +199,9 @@ func lostLeadershipGoCb(p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.LostLeadership(node)
+	if node.callbackHandler != nil {
+		node.callbackHandler.LostLeadership(node)
+	}
 }
 
 //export onLeaderChangeGoCb
@@ -199,7 +210,9 @@ func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
-	node.callbackHandler.OnLeaderChange(node, uint64(id))
+	if node.callbackHandler != nil {
+		node.callbackHandler.OnLeaderChange(node, uint64(id))
+	}
 }
 
 //export appendGoCb
