@@ -178,7 +178,7 @@ func onAppendGoCb(round C.uint64_t, str *C.char, length C.int, p unsafe.Pointer)
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
 	if node.callbackHandler != nil {
-		node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length))
+		go func() { node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length)) }()
 	}
 }
 
@@ -189,7 +189,7 @@ func gainedLeadershipGoCb(p unsafe.Pointer) {
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
 	if node.callbackHandler != nil {
-		node.callbackHandler.GainedLeadership(node)
+		go func() { node.callbackHandler.GainedLeadership(node) }()
 	}
 }
 
@@ -200,7 +200,7 @@ func lostLeadershipGoCb(p unsafe.Pointer) {
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
 	if node.callbackHandler != nil {
-		node.callbackHandler.LostLeadership(node)
+		go func() { node.callbackHandler.LostLeadership(node) }()
 	}
 }
 
@@ -211,7 +211,7 @@ func onLeaderChangeGoCb(id C.uint64_t, p unsafe.Pointer) {
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
 	if node.callbackHandler != nil {
-		node.callbackHandler.OnLeaderChange(node, uint64(id))
+		go func() { node.callbackHandler.OnLeaderChange(node, uint64(id)) }()
 	}
 }
 
@@ -223,8 +223,10 @@ func appendGoCb(status C.int, p unsafe.Pointer) {
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
 	if node != nil && node.appendResult != nil {
-		node.appendResult <- appendResult{
-			status: int(status),
-		}
+		go func() {
+			node.appendResult <- appendResult{
+				status: int(status),
+			}
+		}()
 	}
 }
