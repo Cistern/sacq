@@ -41,8 +41,9 @@ Role :: periodic_leader(uint64_t ts) {
 
 		if (m_leader_data->m_pending_round > 0) {
 			// There's a pending append.
-			if (max_round != m_leader_data->m_pending_round ||
-				pending_round_votes < m_cluster_size/2) {
+			if ((max_round != m_leader_data->m_pending_round ||
+				pending_round_votes < m_cluster_size/2) &&
+				m_cluster_size > 1) {
 				// Not enough votes for the pending append
 				// We need to forfeit leadership.
 				if (m_leader_data->m_callback != nullptr) {
