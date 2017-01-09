@@ -117,9 +117,9 @@ public:
 		if (dest_len < body_size()) {
 			return -1;
 		}
-		write64be(id, dest);
+		write64le(id, dest);
 		dest += 8;
-		write16be(address.size(), dest);
+		write16le(address.size(), dest);
 		dest += 2;
 		memcpy(dest, address.c_str(), address.size());
 		return 0;
@@ -131,9 +131,9 @@ public:
 		if (src_len < body_size()) {
 			return -1;
 		}
-		id = read64be(src);
+		id = read64le(src);
 		src += 8;
-		uint16_t address_size = read16be(src);
+		uint16_t address_size = read16le(src);
 		src += 2;
 		if (src_len < 8 + 2 + address_size) {
 			return -2;
@@ -171,9 +171,9 @@ public:
 		if (dest_len < body_size()) {
 			return -1;
 		}
-		write64be(id, dest);
+		write64le(id, dest);
 		dest += 8;
-		write16be(address.size(), dest);
+		write16le(address.size(), dest);
 		dest += 2;
 		memcpy(dest, address.c_str(), address.size());
 		return 0;
@@ -185,9 +185,9 @@ public:
 		if (src_len < body_size()) {
 			return -1;
 		}
-		id = read64be(src);
+		id = read64le(src);
 		src += 8;
-		uint16_t address_size = read16be(src);
+		uint16_t address_size = read16le(src);
 		src += 2;
 		if (src_len < 8 + 2 + address_size) {
 			return -2;
@@ -247,15 +247,15 @@ public:
 		if (dest_len < body_size()) {
 			return -1;
 		}
-		write64be(id, dest);
+		write64le(id, dest);
 		dest += 8;
-		write64be(seq, dest);
+		write64le(seq, dest);
 		dest += 8;
-		write64be(round, dest);
+		write64le(round, dest);
 		dest += 8;
-		write64be(next, dest);
+		write64le(next, dest);
 		dest += 8;
-		write32be(next_content.size(), dest);
+		write32le(next_content.size(), dest);
 		dest += 4;
 		memcpy(dest, next_content.c_str(), next_content.size());
 		return 0;
@@ -267,15 +267,15 @@ public:
 		if (src_len < body_size()) {
 			return -1;
 		}
-		id = read64be(src);
+		id = read64le(src);
 		src += 8;
-		seq = read64be(src);
+		seq = read64le(src);
 		src += 8;
-		round = read64be(src);
+		round = read64le(src);
 		src += 8;
-		next = read64be(src);
+		next = read64le(src);
 		src += 8;
-		uint32_t next_content_size = read32be(src);
+		uint32_t next_content_size = read32le(src);
 		src += 4;
 		if (src_len < 8+8+8+8+4 + next_content_size) {
 			return -2;
@@ -323,11 +323,11 @@ public:
 		if (dest_len < body_size()) {
 			return -1;
 		}
-		write64be(id, dest);
+		write64le(id, dest);
 		dest += 8;
-		write64be(seq, dest);
+		write64le(seq, dest);
 		dest += 8;
-		write64be(round, dest);
+		write64le(round, dest);
 		return 0;
 	}
 
@@ -337,11 +337,11 @@ public:
 		if (src_len < body_size()) {
 			return -1;
 		}
-		id = read64be(src);
+		id = read64le(src);
 		src += 8;
-		seq = read64be(src);
+		seq = read64le(src);
 		src += 8;
-		round = read64be(src);
+		round = read64le(src);
 		return 0;
 	}
 

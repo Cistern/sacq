@@ -6,28 +6,28 @@
 extern "C" {
 #endif
 
-void write8be(uint8_t, uint8_t*);
-void write16be(uint16_t, uint8_t*);
-void write32be(uint32_t, uint8_t*);
-void write64be(uint64_t, uint8_t*);
+void write8le(uint8_t, uint8_t*);
+void write16le(uint16_t, uint8_t*);
+void write32le(uint32_t, uint8_t*);
+void write64le(uint64_t, uint8_t*);
 
-uint8_t read8be(uint8_t*);
-uint16_t read16be(uint8_t*);
-uint32_t read32be(uint8_t*);
-uint64_t read64be(uint8_t*);
+uint8_t read8le(uint8_t*);
+uint16_t read16le(uint8_t*);
+uint32_t read32le(uint8_t*);
+uint64_t read64le(uint8_t*);
 
 inline void
-write8be(uint8_t v, uint8_t* dest) {
+write8le(uint8_t v, uint8_t* dest) {
 	*dest = v;
 }
 
 inline uint8_t
-read8be(uint8_t* src) {
+read8le(uint8_t* src) {
 	return *src;
 }
 
 inline void
-write16be(uint16_t v, uint8_t* dest) {
+write16le(uint16_t v, uint8_t* dest) {
 	*dest = uint8_t(v);
 	dest++;
 	v >>= 8;
@@ -35,7 +35,7 @@ write16be(uint16_t v, uint8_t* dest) {
 }
 
 inline uint16_t
-read16be(uint8_t* src) {
+read16le(uint8_t* src) {
 	uint16_t v = *src;
 	src++;
 	v |= uint64_t(*src) << (8*1);
@@ -43,7 +43,7 @@ read16be(uint8_t* src) {
 }
 
 inline void
-write32be(uint32_t v, uint8_t* dest) {
+write32le(uint32_t v, uint8_t* dest) {
 	*dest = uint8_t(v);
 	dest++;
 	v >>= 8;
@@ -57,7 +57,7 @@ write32be(uint32_t v, uint8_t* dest) {
 }
 
 inline uint32_t
-read32be(uint8_t* src) {
+read32le(uint8_t* src) {
 	uint32_t v = *src;
 	src++;
 	v |= uint32_t(*src) << 8;
@@ -69,7 +69,7 @@ read32be(uint8_t* src) {
 }
 
 inline void
-write64be(uint64_t v, uint8_t* dest) {
+write64le(uint64_t v, uint8_t* dest) {
 	*dest = uint8_t(v);
 	dest++;
 	v >>= 8;
@@ -95,7 +95,7 @@ write64be(uint64_t v, uint8_t* dest) {
 }
 
 inline uint64_t
-read64be(uint8_t* src) {
+read64le(uint8_t* src) {
 	uint64_t v = *src;
 	src++;
 	v |= uint64_t(*src) << (8*1);

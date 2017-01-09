@@ -34,19 +34,19 @@ Message :: pack(uint8_t* dest, int dest_len) const {
 		return -1;
 	}
 
-	write32be(length, dest);
+	write32le(length, dest);
 	dest += 4;
 	dest_len -= 4;
 	memcpy(dest, nonce_hash, NONCE_HASH_SIZE);
 	dest += NONCE_HASH_SIZE;
 	dest_len -= NONCE_HASH_SIZE;
-	write8be(type, dest);
+	write8le(type, dest);
 	dest++;
 	dest_len--;
-	write8be(flags, dest);
+	write8le(flags, dest);
 	dest++;
 	dest_len--;
-	write64be(message_id, dest);
+	write64le(message_id, dest);
 	dest += 8;
 	dest_len -= 8;
 
@@ -68,18 +68,18 @@ Message :: unpack(uint8_t* src, int src_len) {
 		return -1;
 	}
 
-	uint32_t length = read32be(src);
+	uint32_t length = read32le(src);
 	src += 4;
 	if (src_len < length) {
 		return -2;
 	}
 	memcpy(nonce_hash, src, NONCE_HASH_SIZE);
 	src += NONCE_HASH_SIZE;
-	type = read8be(src);
+	type = read8le(src);
 	src++;
-	flags = read8be(src);
+	flags = read8le(src);
 	src++;
-	message_id = read64be(src);
+	message_id = read64le(src);
 	src += 8;
 	unpack_body(src, length - MSG_HEADER_SIZE);
 	return 0;
@@ -195,7 +195,7 @@ Codec :: decode_message_length(uint8_t* src, int src_len) {
 	if (src_len < 4) {
 		return -1;
 	}
-	uint32_t length = read32be(src);
+	uint32_t length = read32le(src);
 	return (int)length;
 }
 
