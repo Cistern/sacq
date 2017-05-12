@@ -7,7 +7,6 @@
 
 #include "message.hpp"
 #include "codec.hpp"
-#include "randombytes.h"
 
 /**
  * A message header has the following fields:

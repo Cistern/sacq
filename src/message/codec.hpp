@@ -14,6 +14,11 @@ public:
 	Codec()
 	: m_key("")
 	{
+		m_dev_urandom = fopen("/dev/urandom", "r");
+		if (m_dev_urandom == nullptr) {
+			std::cerr << "libab: failed to open /dev/urandom" << std::endl;
+			exit(1);
+		}
 	}
 
 	void
@@ -38,6 +43,28 @@ public:
 
 	int
 	decode_message_length(uint8_t* src, int src_len);
+
+	~Codec()
+	{
+		fclose(m_dev_urandom);
+	}
+
 private:
-	std::string                    m_key;
+	void
+	randombytes(unsigned char* buf, unsigned int len)
+	{
+		unsigned int remaining = len;
+		while (remaining > 0) {
+			size_t read = fread(buf + (len-remaining), remaining, 1, m_dev_urandom);
+			if (read == 0) {
+				std::cerr << "libab: failed to read from /dev/urandom" << std::endl;
+				exit(2);
+			}
+			remaining -= read;
+		}
+	}
+
+private:
+	std::string m_key;
+	FILE*       m_dev_urandom;
 }; // Codec

@@ -13,7 +13,7 @@ void randombytes(unsigned char* buf, unsigned int len) {
 	}
 	unsigned int remaining = len;
 	while (remaining > 0) {
-		size_t read = fread(buf, remaining, 1, f);
+		size_t read = fread(buf + (len-remaining), remaining, 1, f);
 		if (read == 0) {
 			std::cerr << "libab: failed to read from /dev/urandom" << std::endl;
 			exit(2);
