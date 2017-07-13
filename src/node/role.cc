@@ -183,7 +183,7 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		return;
 	}
 
-	if (m_follower_data->m_current_leader > msg.id) {
+	if (m_follower_data->m_current_leader > msg.id || m_follower_data->m_current_leader == 0) {
 		// Our current leader is less authoritative. Replace.
 		m_follower_data->m_current_leader = msg.id;
 		if (m_client_callbacks.on_leader_change != nullptr) {
@@ -203,6 +203,7 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 	if (m_follower_data->m_pending_round != 0) {
 		// We haven't confirmed a previous append.
 		// Ignore all other messages.
+		return;
 	}
 
 	if (msg.next != 0) {
