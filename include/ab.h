@@ -55,6 +55,8 @@ typedef struct {
 	// lost_leadership is called when the node loses the leadership role.
 	void (*lost_leadership)(void* cb_data);
 	// on_leader_change is called when there is a new leader ID.
+	// leader_id is set to 0 if the the current leader is suspected to have failed
+	// (meaning there is no active leader).
 	void (*on_leader_change)(uint64_t leader_id, void* cb_data);
 } ab_callbacks_t;
 

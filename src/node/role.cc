@@ -141,10 +141,16 @@ Role :: periodic_follower(uint64_t ts) {
 	}
 
 	if (ts - m_follower_data->m_last_leader_active > 1000e6) {
+		auto previous_leader = m_follower_data->m_current_leader;
 		// Leader hasn't been active for over 1000 ms
 		m_follower_data = nullptr;
 		m_state = PotentialLeader;
 		m_potential_leader_data = std::make_unique<PotentialLeaderData>();
+		if (m_client_callbacks.on_leader_change != nullptr &&
+			// Only invoke callback if there was a previous leader.
+			previous_leader != 0) {
+			m_client_callbacks.on_leader_change(0, m_client_callbacks_data);
+		}
 	}
 }
 
