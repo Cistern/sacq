@@ -8,7 +8,7 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -lab
+#cgo LDFLAGS: -lab -luv -lstdc++
 
 #include <stdlib.h>
 #include <ab.h>
