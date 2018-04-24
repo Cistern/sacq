@@ -155,7 +155,7 @@ private:
 
 	uint64_t                      m_trusted_peer;
 	uint64_t                      m_last_leader_active;
-	std::unique_ptr<Role>         m_role; // TODO
+	std::unique_ptr<Role>         m_role;
 
 	std::unique_ptr<std::mutex>   m_mutex;
 	uv_async_t                    m_async;
