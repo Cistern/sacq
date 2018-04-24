@@ -57,6 +57,15 @@ main(int argc, char* argv[]) {
 	}
 
 	ab_callbacks_t callbacks;
+	callbacks.gained_leadership = [](void* cb_data) {
+		std::cerr << "gained leadership" << std::endl;
+	};
+	callbacks.lost_leadership = [](void* cb_data) {
+		std::cerr << "lost leadership" << std::endl;
+	};
+	callbacks.on_leader_change = [](uint64_t leader_id, void* cb_data) {
+		std::cerr << "leader is now " << leader_id << std::endl;
+	};
 	auto n = std::make_unique<Node>(id, cluster_size, callbacks, nullptr);
 	n->set_key(key);
 	if (n->start(addr_str) < 0) {

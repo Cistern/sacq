@@ -5,8 +5,9 @@
 #include <iostream>
 #include <tweetnacl/tweetnacl.h>
 
-#include "message.hpp"
 #include "codec.hpp"
+#include "message.hpp"
+#include "randombytes.h"
 
 /**
  * A message header has the following fields:
