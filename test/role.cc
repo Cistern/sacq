@@ -116,3 +116,64 @@ TEST_CASE( "Follower ignores other leader heartbeat", "[role]" ) {
 
 	REQUIRE( ack_msg == nullptr );
 }
+
+
+TEST_CASE( "on_leader_change is called when the current leader is lost", "[role]" ) {
+	TestRegistry reg;
+	Role role(reg, 2, 2);
+	ab_callbacks_t callbacks = {};
+
+	struct TestData {
+		bool called_on_leader_change;
+		uint64_t current_leader;
+	};
+
+	TestData test_data = {false, 0};
+
+	auto called_on_leader_change = false;
+	callbacks.on_leader_change = [](uint64_t current_leader, void* data) {
+		((TestData*)data)->called_on_leader_change = true;
+		((TestData*)data)->current_leader = current_leader;
+	};
+	role.set_callbacks(callbacks, &test_data);
+
+	uint64_t ts = 1e9;
+	role.periodic(ts);
+	// Tick 2 seconds
+	ts += 1e9;
+	role.periodic(ts);
+	ts += 1e9;
+	role.periodic(ts);
+
+	// Role should be PotentialLeader.
+	REQUIRE( role.state() == PotentialLeader );
+	REQUIRE( test_data.called_on_leader_change == false );
+
+	auto leader_active = std::make_unique<LeaderActiveMessage>();
+	leader_active->id = 1;
+	leader_active->source = 1;
+	role.handle_leader_active(ts, *leader_active);
+
+	// Role should be Follower.
+	REQUIRE( role.state() == Follower );
+	REQUIRE( role.round() == 0 );
+	REQUIRE( role.current_leader() == 1 );
+
+	REQUIRE( test_data.called_on_leader_change == true );
+	REQUIRE( test_data.current_leader == 1 );
+
+	// Reset
+	test_data.called_on_leader_change = false;
+
+	// Tick 2 seconds
+	ts += 1e9;
+	role.periodic(ts);
+	ts += 1e9;
+	role.periodic(ts);
+
+	// current_leader should be 0 now.
+	REQUIRE( test_data.called_on_leader_change == true );
+	REQUIRE( test_data.current_leader == 0 );
+	REQUIRE( role.state() == PotentialLeader );
+	REQUIRE( role.current_leader() == 0 );
+}

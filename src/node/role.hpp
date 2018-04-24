@@ -140,6 +140,15 @@ public:
 		return m_round;
 	}
 
+	uint64_t
+	current_leader() const
+	{
+		if (m_state == Follower) {
+			return m_follower_data->m_current_leader;
+		}
+		return 0;
+	}
+
 private:
 	void
 	periodic_leader(uint64_t ts);
