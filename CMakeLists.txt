@@ -13,7 +13,8 @@ include_directories(
 	dep/libuv/include
 )
 
-add_subdirectory(dep/libuv)
+set(BUILD_TESTING OFF)
+add_subdirectory(dep/libuv EXCLUDE_FROM_ALL)
 
 add_executable(main
 	src/main.cc

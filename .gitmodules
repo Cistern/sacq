@@ -1,3 +1,6 @@
 [submodule "dep/cpl"]
 	path = dep/cpl
 	url = https://github.com/Preetam/cpl.git
+[submodule "dep/libuv"]
+	path = dep/libuv
+	url = https://github.com/libuv/libuv.git
