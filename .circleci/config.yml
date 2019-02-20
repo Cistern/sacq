@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    #working_directory: /go/src/github.com/Preetam/libab
+    working_directory: /go/src/github.com/Preetam/libab
     docker:
       - image: preetamjinka/libab-build:0.0.1
     steps:
@@ -12,3 +12,4 @@ jobs:
       - run: cd build && make uv -j
       - run: cd build && make -j
       - run: cd build && make install
+      - run: cs build && ls -l
