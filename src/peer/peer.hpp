@@ -96,6 +96,7 @@ public:
 		m_tcp = std::move(rhs.m_tcp);
 		m_tcp->data = this;
 		m_address = rhs.m_address;
+		m_id = rhs.m_id;
 		m_valid = true;
 		m_active = true;
 		m_read_buf = std::move(rhs.m_read_buf);

@@ -13,7 +13,8 @@ class PeerRegistry : public Registry
 	using shared_peer = std::shared_ptr<Peer>;
 
 public:
-	PeerRegistry()
+	PeerRegistry(uint64_t id)
+	: m_id(id)
 	{
 	}
 
@@ -69,6 +70,9 @@ public:
 	broadcast(const Message* msg)
 	{
 		for (auto i = std::begin(m_peers); i != std::end(m_peers); ++i) {
+			if (i->second->id() < m_id) {
+				// TODO: Don't broadcast to nodes more authoritative.
+			}
 			i->second->send(msg);
 		}
 	}
@@ -88,5 +92,6 @@ public:
 	}
 
 private:
+	uint64_t                             m_id;
 	std::unordered_map<int, shared_peer> m_peers;
 }; // PeerRegistry

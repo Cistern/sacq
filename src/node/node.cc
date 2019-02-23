@@ -95,13 +95,16 @@ void
 Node :: handle_message(const Message* msg) {
 	uint64_t now = uv_hrtime();
 	IdentityMessage ident_msg(m_id, m_listen_address);
+	IdentityRequest ident_req_msg;
 	switch (msg->type) {
 	case MSG_IDENT:
 		ident_msg = static_cast<const IdentityMessage&>(*msg);
 		m_peer_registry->set_identity(ident_msg.source, ident_msg.id, ident_msg.address);
 		break;
 	case MSG_IDENT_REQUEST:
+		ident_req_msg = static_cast<const IdentityRequest&>(*msg);
 		m_peer_registry->send_to_index(msg->source, &ident_msg);
+		m_peer_registry->set_identity(ident_req_msg.source, ident_req_msg.id, ident_req_msg.address);
 		break;
 	case MSG_LEADER_ACTIVE:
 		m_role->handle_leader_active(now, static_cast<const LeaderActiveMessage&>(*msg));

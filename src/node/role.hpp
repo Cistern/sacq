@@ -94,6 +94,10 @@ public:
 			return;
 		}
 
+		if (m_follower_data->m_pending_round != round) {
+			return;
+		}
+
 		// Send ack.
 		LeaderActiveAck ack(m_id, m_seq, round);
 		m_registry.send_to_id(m_follower_data->m_current_leader, &ack);
@@ -104,6 +108,7 @@ public:
 	send_append(std::string append_content, std::function<void(int, void*)> cb, void* data)
 	{
 		if (m_state != Leader) {
+			// Not a leader so this is an invalid operation.
 			cb(-1, data);
 			return;
 		}
@@ -112,13 +117,39 @@ public:
 			cb(-2, data);
 			return;
 		}
+		// Set up callbacks for the append.
 		m_leader_data->m_callback = cb;
 		m_leader_data->m_callback_data = data;
 		m_leader_data->m_pending_round = m_round+1;
+
+		// Broadcast it.
 		LeaderActiveMessage msg(m_id, ++m_seq, m_round, m_round+1, append_content);
 		m_registry.broadcast(&msg);
 		m_leader_data->m_last_broadcast = uv_hrtime();
 		m_leader_data->m_acks.clear();
+	}
+
+	void
+	cancel_append()
+	{
+		if (m_leader_data->m_callback != nullptr) {
+			m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
+			m_leader_data->m_callback = nullptr;
+			m_leader_data->m_callback_data = nullptr;
+		}
+	}
+
+	void
+	drop_leadership(uint64_t new_leader_id)
+	{
+		m_potential_leader_data = nullptr;
+		m_leader_data = nullptr;
+		m_follower_data = std::make_unique<FollowerData>();
+		m_state = Follower;
+		m_follower_data->m_current_leader = new_leader_id;
+		if (m_client_callbacks.on_leader_change != nullptr) {
+			m_client_callbacks.on_leader_change(new_leader_id, m_client_callbacks_data);
+		}
 	}
 
 	void

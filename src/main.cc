@@ -71,8 +71,9 @@ main(int argc, char* argv[]) {
 		std::cerr << "invalid key" << std::endl;
 		return 1;
 	}
-	if (n->start(addr_str) < 0) {
-		std::cerr << "failed to start" << std::endl;
+	auto ret = n->start(addr_str);
+	if (ret < 0) {
+		std::cerr << "failed to start: " << ret << std::endl;
 		return 1;
 	}
 	std::cerr << "listening on " << addr_str << " with ID " << id << std::endl;

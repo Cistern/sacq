@@ -25,7 +25,7 @@ public:
 	Node(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* callbacks_data)
 	: m_id(id)
 	, m_cluster_size(cluster_size)
-	, m_peer_registry(std::make_unique<PeerRegistry>())
+	, m_peer_registry(std::make_unique<PeerRegistry>(id))
 	, m_codec(std::make_shared<Codec>())
 	, m_index_counter(0)
 	, m_trusted_peer(0)

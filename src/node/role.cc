@@ -156,30 +156,25 @@ Role :: periodic_follower(uint64_t ts) {
 
 void
 Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
+	if (msg.seq < m_seq) {
+		// Ignore out-of-date heartbeat.
+		return;
+	}
+	m_seq = msg.seq;
+
 	if (m_state != Follower) {
 		if (msg.id < m_id) {
 			// Other node has more authority. Drop down to follower state.
 			if (m_state == Leader) {
-				if (m_leader_data->m_callback != nullptr) {
-					// Append was not confirmed by a majority.
-					m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
-					m_leader_data->m_callback = nullptr;
-					m_leader_data->m_callback_data = nullptr;
-				}
+				// Cancel append if we have one.
+				cancel_append();
 				if (m_client_callbacks.lost_leadership != nullptr) {
 					m_client_callbacks.lost_leadership(m_client_callbacks_data);
 				}
 				m_leader_data = nullptr;
 			}
-			m_follower_data = std::make_unique<FollowerData>();
-			m_potential_leader_data = nullptr;
-			m_state = Follower;
-			m_follower_data->m_current_leader = msg.id;
-			if (m_client_callbacks.on_leader_change != nullptr) {
-				m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
-			}
-		} else {
-			return;
+			auto new_leader_id = msg.id;
+			drop_leadership(new_leader_id);
 		}
 	}
 
@@ -187,6 +182,17 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		// We're more authoritative.
 		// Ignore this message.
 		return;
+	}
+
+	if (m_follower_data->m_pending_round != 0) {
+		// We haven't confirmed a previous append.
+		if (msg.round >= m_follower_data->m_pending_round) {
+			// Leader has moved on. Drop our pending append.
+			m_follower_data->m_pending_round = 0;
+		} else {
+			// Still valid. Ignore everything until we confirm.
+			return;
+		}
 	}
 
 	if (m_follower_data->m_current_leader > msg.id || m_follower_data->m_current_leader == 0) {
@@ -206,16 +212,9 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 		m_round = msg.round;
 	}
 
-	if (m_follower_data->m_pending_round != 0) {
-		// We haven't confirmed a previous append.
-		// Ignore all other messages.
-		return;
-	}
-
 	if (msg.next != 0) {
 		// Append message
 		if (m_client_callbacks.on_append != nullptr) {
-			m_seq = msg.seq;
 			m_client_callbacks.on_append(msg.next, msg.next_content.c_str(),
 				msg.next_content.size(), m_client_callbacks_data);
 			m_follower_data->m_last_leader_active = ts;
@@ -226,8 +225,8 @@ Role :: handle_leader_active(uint64_t ts, const LeaderActiveMessage& msg) {
 
 	// Normal heartbeat
 	// Send ack
-	LeaderActiveAck ack(m_id, msg.seq, m_round);
-	m_registry.send_to_index(msg.source, &ack);
+	LeaderActiveAck ack(m_id, m_seq, m_round);
+	m_registry.send_to_id(msg.id, &ack);
 	if (m_follower_data->m_current_leader != msg.id) {
 		if (m_client_callbacks.on_leader_change != nullptr) {
 			m_client_callbacks.on_leader_change(msg.id, m_client_callbacks_data);
