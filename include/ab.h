@@ -71,8 +71,9 @@ typedef struct {
 ab_node_t*
 ab_node_create(uint64_t id, int cluster_size);
 
+// ab_set_callbacks assigns callbacks to a node.
 void
-ab_node_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data);
+ab_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data);
 
 // ab_set_key sets the node's shared encryption key.
 // This is the unmodified encryption key, so it needs to be

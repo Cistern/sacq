@@ -42,12 +42,5 @@ target_link_libraries(abtest ab)
 install(TARGETS ab DESTINATION lib)
 install(FILES include/ab.h DESTINATION include)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	install(FILES build/dep/libuv/libuv.dylib DESTINATION lib)
-else()
-	install(FILES build/dep/libuv/libuv.so DESTINATION lib)
-
-endif()
-
 add_test(NAME abtest COMMAND abtest)
 enable_testing(true)

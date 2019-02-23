@@ -23,86 +23,62 @@ Role :: periodic_leader(uint64_t ts) {
 			// Not enough time has passed to send a regular heartbeat.
 			return;
 		}
-	}
-	if (m_leader_data->m_acks.size() >= m_cluster_size/2) {
-		// Received required votes.
-		uint64_t max_round = m_round;
-		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
-			if (it->second > max_round) {
-				max_round = it->second;
-			}
-		}
-		auto pending_round_votes = 0;
-		for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
-			if (it->second == max_round) {
-				pending_round_votes++;
-			}
-		}
 
-		if (m_leader_data->m_pending_round > 0) {
-			// There's a pending append.
-			if ((max_round != m_leader_data->m_pending_round ||
-				pending_round_votes <= m_cluster_size/2) &&
-				m_cluster_size > 1) {
-				// Not enough votes for the pending append
-				// We need to forfeit leadership.
-				if (m_leader_data->m_callback != nullptr) {
-					// Append was not confirmed by a majority.
-					m_leader_data->m_callback(-3, m_leader_data->m_callback_data);
-					m_leader_data->m_callback = nullptr;
-					m_leader_data->m_callback_data = nullptr;
-					m_leader_data->m_pending_round = 0;
+		// Do we have a majority of votes?
+		if (m_leader_data->m_acks.size() >= m_cluster_size/2 /* assume a vote for ourselves */) {
+			// Send another heartbeat.
+			LeaderActiveMessage msg(m_id, ++m_seq, m_round);
+			m_registry.broadcast(&msg);
+			m_leader_data->m_last_broadcast = ts;
+			m_leader_data->m_acks.clear();
+			return;
+		} else {
+			// Did we lose leadership?
+			if (ts - m_leader_data->m_last_broadcast > 300e6) {
+				// Yes. Forfeit leadership.
+				if (m_client_callbacks.lost_leadership != nullptr) {
+					m_client_callbacks.lost_leadership(m_client_callbacks_data);
 				}
 				m_leader_data = nullptr;
 				m_state = PotentialLeader;
 				m_potential_leader_data = std::make_unique<PotentialLeaderData>();
+			} else {
+				// Not yet. Wait.
 				return;
 			}
-
-			if (m_leader_data->m_callback != nullptr) {
-				// Append was confirmed by a majority.
-				m_leader_data->m_callback(0, m_leader_data->m_callback_data);
-				m_leader_data->m_callback = nullptr;
-				m_leader_data->m_callback_data = nullptr;
-				m_round = m_leader_data->m_pending_round;
-				m_leader_data->m_pending_round = 0;
-			}
-		} else {
-			// No pending append
-			// This is just a regular heartbeat ack.
-			if (max_round > m_round) {
-				m_round = max_round;
-			}
 		}
-
-		++m_seq;
-		auto round = m_round;
-		if (m_leader_data->m_pending_round > 0) {
-			round = m_leader_data->m_pending_round;
-		}
-		LeaderActiveMessage msg(m_id, m_seq, round);
-		m_registry.broadcast(&msg);
-		m_leader_data->m_last_broadcast = ts;
-		m_leader_data->m_acks.clear();
-		return;
 	}
-	if (ts - m_leader_data->m_last_broadcast > 300e6) {
-		// It's been over 300 ms since the last broadcast.
-		// Didn't get a majority. We're not a leader anymore.
-		if (m_leader_data->m_callback != nullptr) {
-			// Append was not confirmed by a majority.
-			m_leader_data->m_callback(-4, m_leader_data->m_callback_data);
-			m_leader_data->m_callback = nullptr;
-			m_leader_data->m_callback_data = nullptr;
-			m_leader_data->m_pending_round = 0;
+
+	// We have a pending round. Did a majority ack it?
+	auto pending_round_votes = 0;
+	for (auto it = m_leader_data->m_acks.begin(); it != m_leader_data->m_acks.end(); ++it) {
+		if (it->second == m_leader_data->m_pending_round) {
+			pending_round_votes++;
 		}
-		if (m_client_callbacks.lost_leadership != nullptr) {
-			m_client_callbacks.lost_leadership(m_client_callbacks_data);
-		}
-		m_leader_data = nullptr;
-		m_state = PotentialLeader;
-		m_potential_leader_data = std::make_unique<PotentialLeaderData>();
+	}
+	if (pending_round_votes >= m_cluster_size/2) {
+		// Yes.
+		m_leader_data->m_callback(0, m_leader_data->m_callback_data);
+		m_leader_data->m_callback = nullptr;
+		m_leader_data->m_callback_data = nullptr;
+		m_round = m_leader_data->m_pending_round;
+		m_leader_data->m_pending_round = 0;
 		return;
+	} else {
+		// No. Did we wait long enough?
+		if (ts - m_leader_data->m_last_broadcast > 300e6) {
+			// Yes. Cancel append and forfeit leadership.
+			cancel_append();
+			if (m_client_callbacks.lost_leadership != nullptr) {
+				m_client_callbacks.lost_leadership(m_client_callbacks_data);
+			}
+			m_leader_data = nullptr;
+			m_state = PotentialLeader;
+			m_potential_leader_data = std::make_unique<PotentialLeaderData>();
+		} else {
+			// Not yet. Wait.
+			return;
+		}
 	}
 }
 

@@ -13,7 +13,7 @@ ab_node_create(uint64_t id, int cluster_size) {
 }
 
 void
-ab_node_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data) {
+ab_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data) {
 	node->rep->set_callbacks(callbacks, data);
 }
 

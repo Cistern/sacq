@@ -132,14 +132,14 @@ public:
 		m_leader_data->m_pending_round = m_round+1;
 
 		// Broadcast it.
-		LeaderActiveMessage msg(m_id, ++m_seq, m_round, m_round+1, append_content);
+		LeaderActiveMessage msg(m_id, ++m_seq, m_round, m_leader_data->m_pending_round, append_content);
 		m_registry.broadcast(&msg);
 		m_leader_data->m_last_broadcast = uv_hrtime();
 		m_leader_data->m_acks.clear();
 
 		// Send a callback to ourselves.
 		if (m_client_callbacks.on_append != nullptr) {
-			m_client_callbacks.on_append(m_round+1, append_content.c_str(),
+			m_client_callbacks.on_append(m_leader_data->m_pending_round, append_content.c_str(),
 				append_content.size(), m_client_callbacks_data);
 		}
 	}

@@ -86,8 +86,8 @@ func NewNode(id uint64,
 	*n.callbacksNum = C.int(registrationCounter)
 
 	// Create the ab_node_t handle
-	ptr := C.ab_node_create(C.uint64_t(id), C.int(clusterSize), cCallbacks,
-		unsafe.Pointer(n.callbacksNum))
+	ptr := C.ab_node_create(C.uint64_t(id), C.int(clusterSize))
+	C.ab_set_callbacks(ptr, cCallbacks, unsafe.Pointer(n.callbacksNum))
 
 	// Start listening
 	listenStr := C.CString(listen)
@@ -186,8 +186,9 @@ func onAppendGoCb(round C.uint64_t, str *C.char, length C.int, p unsafe.Pointer)
 	registeredNodesLock.RLock()
 	defer registeredNodesLock.RUnlock()
 	node := registeredNodes[i]
+	goStr := C.GoStringN(str, length)
 	if node.callbackHandler != nil {
-		go func() { node.callbackHandler.OnAppend(node, uint64(round), C.GoStringN(str, length)) }()
+		go func() { node.callbackHandler.OnAppend(node, uint64(round), goStr) }()
 	}
 }
 
