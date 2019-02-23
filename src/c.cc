@@ -6,10 +6,15 @@
 struct ab_node_t { Node* rep; };
 
 ab_node_t*
-ab_node_create(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* data) {
+ab_node_create(uint64_t id, int cluster_size) {
 	auto node = new ab_node_t;
-	node->rep = new Node(id, cluster_size, callbacks, data);
+	node->rep = new Node(id, cluster_size);
 	return node;
+}
+
+void
+ab_node_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data) {
+	node->rep->set_callbacks(callbacks, data);
 }
 
 int

@@ -69,7 +69,10 @@ typedef struct {
 // - data: user-provided pointer passed as the last argument in the ab_callbacks_t callbacks.
 // The return value should eventually be passed to ab_destroy.
 ab_node_t*
-ab_node_create(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* data);
+ab_node_create(uint64_t id, int cluster_size);
+
+void
+ab_node_set_callbacks(ab_node_t* node, ab_callbacks_t callbacks, void* data);
 
 // ab_set_key sets the node's shared encryption key.
 // This is the unmodified encryption key, so it needs to be

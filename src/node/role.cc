@@ -42,13 +42,13 @@ Role :: periodic_leader(uint64_t ts) {
 		if (m_leader_data->m_pending_round > 0) {
 			// There's a pending append.
 			if ((max_round != m_leader_data->m_pending_round ||
-				pending_round_votes < m_cluster_size/2) &&
+				pending_round_votes <= m_cluster_size/2) &&
 				m_cluster_size > 1) {
 				// Not enough votes for the pending append
 				// We need to forfeit leadership.
 				if (m_leader_data->m_callback != nullptr) {
 					// Append was not confirmed by a majority.
-					m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
+					m_leader_data->m_callback(-3, m_leader_data->m_callback_data);
 					m_leader_data->m_callback = nullptr;
 					m_leader_data->m_callback_data = nullptr;
 					m_leader_data->m_pending_round = 0;
@@ -91,7 +91,7 @@ Role :: periodic_leader(uint64_t ts) {
 		// Didn't get a majority. We're not a leader anymore.
 		if (m_leader_data->m_callback != nullptr) {
 			// Append was not confirmed by a majority.
-			m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
+			m_leader_data->m_callback(-4, m_leader_data->m_callback_data);
 			m_leader_data->m_callback = nullptr;
 			m_leader_data->m_callback_data = nullptr;
 			m_leader_data->m_pending_round = 0;

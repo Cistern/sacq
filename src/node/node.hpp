@@ -22,7 +22,7 @@ const uint64_t leader_timeout_ns = 1e9;
 class Node
 {
 public:
-	Node(uint64_t id, int cluster_size, ab_callbacks_t callbacks, void* callbacks_data)
+	Node(uint64_t id, int cluster_size)
 	: m_id(id)
 	, m_cluster_size(cluster_size)
 	, m_peer_registry(std::make_unique<PeerRegistry>(id))
@@ -32,6 +32,11 @@ public:
 	, m_last_leader_active(uv_hrtime())
 	, m_role(std::make_unique<Role>(*m_peer_registry, id, cluster_size))
 	, m_mutex(std::make_unique<std::mutex>())
+	{
+	}
+
+	void
+	set_callbacks(ab_callbacks_t callbacks, void* callbacks_data)
 	{
 		m_role->set_callbacks(callbacks, callbacks_data);
 	}

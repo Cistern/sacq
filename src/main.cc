@@ -56,6 +56,11 @@ main(int argc, char* argv[]) {
 		cluster_size = 1;
 	}
 
+	auto n = std::make_unique<Node>(id, cluster_size);
+	if (n->set_key(key) < 0) {
+		std::cerr << "invalid key" << std::endl;
+		return 1;
+	}
 	ab_callbacks_t callbacks;
 	callbacks.gained_leadership = [](void* cb_data) {
 		std::cerr << "gained leadership" << std::endl;
@@ -66,11 +71,12 @@ main(int argc, char* argv[]) {
 	callbacks.on_leader_change = [](uint64_t leader_id, void* cb_data) {
 		std::cerr << "leader is now " << leader_id << std::endl;
 	};
-	auto n = std::make_unique<Node>(id, cluster_size, callbacks, nullptr);
-	if (n->set_key(key) < 0) {
-		std::cerr << "invalid key" << std::endl;
-		return 1;
-	}
+	callbacks.on_append = [](uint64_t round, const char* data, int data_len, void* cb_data) {
+		auto node = (Node*)(cb_data);
+		std::cerr << "on append " << round << std::endl;
+		node->confirm_append(round);
+	};
+	n->set_callbacks(callbacks, n.get());
 	auto ret = n->start(addr_str);
 	if (ret < 0) {
 		std::cerr << "failed to start: " << ret << std::endl;
@@ -87,6 +93,13 @@ main(int argc, char* argv[]) {
 	});
 
 	std::this_thread::sleep_for(std::chrono::seconds(10));
+
+	n->append("hello", [](int status, void*) {
+		std::cerr << "append result " << status << std::endl;
+	}, nullptr);
+
+	std::this_thread::sleep_for(std::chrono::seconds(10));
+
 	n->shutdown();
 	t.join();
 	n = nullptr;
