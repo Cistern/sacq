@@ -103,6 +103,10 @@ public:
 			return;
 		}
 
+		if (m_follower_data->m_pending_round != round) {
+			return;
+		}
+
 		// Send ack.
 		LeaderActiveAck ack(m_id, m_seq, round);
 		m_registry.send_to_id(m_follower_data->m_current_leader, &ack);
@@ -137,6 +141,29 @@ public:
 		if (m_client_callbacks.on_append != nullptr) {
 			m_client_callbacks.on_append(m_round+1, append_content.c_str(),
 				append_content.size(), m_client_callbacks_data);
+		}
+	}
+
+	void
+	cancel_append()
+	{
+		if (m_leader_data->m_callback != nullptr) {
+			m_leader_data->m_callback(-1, m_leader_data->m_callback_data);
+			m_leader_data->m_callback = nullptr;
+			m_leader_data->m_callback_data = nullptr;
+		}
+	}
+
+	void
+	drop_leadership(uint64_t new_leader_id)
+	{
+		m_potential_leader_data = nullptr;
+		m_leader_data = nullptr;
+		m_follower_data = std::make_unique<FollowerData>();
+		m_state = Follower;
+		m_follower_data->m_current_leader = new_leader_id;
+		if (m_client_callbacks.on_leader_change != nullptr) {
+			m_client_callbacks.on_leader_change(new_leader_id, m_client_callbacks_data);
 		}
 	}
 
